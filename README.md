@@ -1,13 +1,45 @@
-# Sinaq API (Java)
+# Sinaq API
 
-**Sinaq** (Uzbek: *test*) — universal API automation framework for Java.
+**Sinaq** (Uzbek: *test*) is a Java framework for HTTP API automation.
 
-> **V4 (0.4.0-SNAPSHOT):** WireMock, OpenAPI validation, OAuth password/refresh, messaging, cache, replay, distributed runner. See [docs/v4.md](docs/v4.md).
+Fluent request DSL, pluggable HTTP engines, JSONPath / JSON Schema, OAuth2, WireMock, OpenAPI checks, and TestNG / JUnit 5 adapters. Core has **zero compile-time dependencies**.
 
-> **V3 (0.3.0):** OkHttp engine, interceptors, multipart, GraphQL, contract testing, HAR, JDBC validation. See [docs/v3.md](docs/v3.md).
+**Current version: `1.0.0`** (JDK 21+, Maven 3.9+)
 
-> **V2 (0.2.0):** JSONPath, JSON Schema, soft assertions, polling, templates,
-> OAuth2, plugins, metrics. See [docs/v2.md](docs/v2.md).
+## Install
+
+Artifacts are not on Maven Central yet. From this repository:
+
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+mvn clean install
+```
+
+Then in your test project:
+
+```xml
+<dependency>
+  <groupId>io.sinaq</groupId>
+  <artifactId>sinaq-api-starter</artifactId>
+  <version>1.0.0</version>
+  <scope>test</scope>
+</dependency>
+```
+
+`sinaq-api-starter` includes core, RestAssured, Jackson, JSONPath, JSON Schema, and TestNG.
+
+Minimal stack (JDK HTTP client, built-in JSON):
+
+```xml
+<dependency>
+  <groupId>io.sinaq</groupId>
+  <artifactId>sinaq-api-jdk</artifactId>
+  <version>1.0.0</version>
+  <scope>test</scope>
+</dependency>
+```
+
+JUnit 5: add `sinaq-api-junit5` as well (starter ships TestNG).
 
 ## Quick start
 
@@ -19,37 +51,62 @@ ApiClient api = Sinaq.client()
         .build();
 
 api.post("/loan")
-   .bearer(token)
-   .body(Map.of("amount", 150))
-   .expectStatus(200)
-   .expect("success", true)
-   .expectNotNull("loanId");
+        .bearer(token)
+        .body(Map.of("amount", 150))
+        .expectStatus(200)
+        .expect("success", true)
+        .expectNotNull("loanId");
 ```
+
+Share one `ApiClient` across tests (it is immutable and thread-safe). Create a new request (`api.get(...)`) inside each test.
 
 ## Modules
 
 | Module | Purpose |
-|---|---|
-| `sinaq-api-core` | DSL, SPIs, config, events — **zero compile deps** |
+|--------|---------|
+| `sinaq-api-core` | DSL, SPIs, config, events — no compile deps |
 | `sinaq-api-jdk` | `java.net.http` engine |
 | `sinaq-api-restassured` | RestAssured 5 engine |
+| `sinaq-api-okhttp` | OkHttp 4 engine |
 | `sinaq-api-jackson` | POJO serialization |
-| `sinaq-api-jsonpath` | Full Jayway JSONPath (V2) |
-| `sinaq-api-jsonschema` | JSON Schema validation (V2) |
-| `sinaq-api-oauth` | OAuth2 token provider (V2) |
-| `sinaq-api-yaml` | YAML config loader (V2) |
-| `sinaq-api-okhttp` | OkHttp transport (V3) |
-| `sinaq-api-jdbc` | JDBC DB validation (V3) |
-| `sinaq-api-openapi` | OpenAPI 3 validation (V4) |
-| `sinaq-api-wiremock` | WireMock stub server (V4) |
-| `sinaq-api-testng` / `sinaq-api-junit5` | Test framework adapters |
-| `sinaq-api-starter` | V2 aggregate (core+restassured+jackson+jsonpath+jsonschema+testng) |
+| `sinaq-api-jsonpath` | Jayway JSONPath |
+| `sinaq-api-jsonschema` | JSON Schema validation |
+| `sinaq-api-oauth` | OAuth2 (client credentials, password, refresh) |
+| `sinaq-api-yaml` | YAML config loader |
+| `sinaq-api-jdbc` | JDBC assertions |
+| `sinaq-api-openapi` | OpenAPI 3 response checks |
+| `sinaq-api-wiremock` | WireMock stub server |
+| `sinaq-api-testng` | TestNG listener |
+| `sinaq-api-junit5` | JUnit 5 extension |
+| `sinaq-api-starter` | Common V2 stack (see above) |
+
+## Features
+
+- Fluent HTTP DSL: headers, auth, body, retry, polling, soft assertions
+- Engines: JDK, RestAssured, OkHttp
+- JSONPath extract, JSON Schema, OpenAPI path/status checks
+- OAuth2 token cache; WireMock stubs; JDBC DB checks
+- Multipart, GraphQL, interceptors, HAR export, contract verify
+- Response cache, replay, in-memory message bus, report export
+
+## Docs
+
+| Guide | Contents |
+|-------|----------|
+| [Getting started](docs/getting-started.md) | Config, fixtures, retry, adapters |
+| [V2](docs/v2.md) | JSONPath, schema, OAuth, YAML, plugins |
+| [V3](docs/v3.md) | OkHttp, interceptors, GraphQL, JDBC, HAR |
+| [V4](docs/v4.md) | WireMock, OpenAPI, cache, replay, messaging |
 
 ## Build
-
-Requires **JDK 21+** and Maven 3.9+.
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
 mvn clean verify
 ```
+
+Runnable examples live in the `examples` module.
+
+## License
+
+Not published yet. Source is available in this repository.
