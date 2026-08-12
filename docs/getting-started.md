@@ -6,7 +6,7 @@ Common stack (RestAssured + Jackson + TestNG):
 
 ```xml
 <dependency>
-  <groupId>io.sinaq</groupId>
+  <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
   <version>1.0.0</version>
   <scope>test</scope>
@@ -17,7 +17,7 @@ Zero-dependency stack (JDK transport, built-in serialization):
 
 ```xml
 <dependency>
-  <groupId>io.sinaq</groupId>
+  <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-jdk</artifactId>
   <version>1.0.0</version>
   <scope>test</scope>

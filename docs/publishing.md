@@ -3,39 +3,37 @@
 This project is configured for the [Central Publisher Portal](https://central.sonatype.org/publish/publish-portal-maven/).
 Daily builds (`mvn verify`) do not publish. Release uses `-P release`.
 
-## 1. Namespace (`groupId`)
+## Coordinates
 
-Artifacts use `io.sinaq`. Central only allows that namespace if you **prove you own it**.
+| Item | Value |
+|------|--------|
+| Domain | [sinaq.uz](https://sinaq.uz) |
+| Maven `groupId` | `uz.sinaq` |
+| Java packages | `io.sinaq.api.*` (unchanged) |
 
-| If you have… | Register this namespace |
-|--------------|-------------------------|
-| Domain `sinaq.io` | `io.sinaq` (TXT DNS record in the Portal) |
-| Only this GitHub account | `io.github.xumoyun005` (then we must change every `groupId`) |
+## 1. Verify namespace `uz.sinaq`
 
-Create a publisher account: [https://central.sonatype.com/](https://central.sonatype.com/)  
-Then **View Namespaces** → **Add Namespace**.
+1. Log in at [https://central.sonatype.com/](https://central.sonatype.com/)
+2. **View Namespaces** → **Add Namespace** → `uz.sinaq`
+3. Add the **TXT** DNS record Portal shows on `sinaq.uz` (registrar DNS panel)
+4. Click **Verify** — wait until status is **Verified** (can take minutes to hours)
 
-Until the namespace is **Verified**, `mvn deploy` will be rejected.
+Until verified, `mvn deploy` is rejected.
 
 ## 2. GPG key (required)
-
-macOS:
 
 ```bash
 brew install gnupg
 gpg --full-generate-key
-# RSA, 4096 bits, your name + email
+# RSA 4096, your name + email
 gpg --list-secret-keys --keyid-format LONG
 gpg --keyserver keys.openpgp.org --send-keys YOUR_KEY_ID
 ```
 
-Remember the passphrase. Maven will ask for it when signing.
-
 ## 3. Portal token
 
-1. Log in at [https://central.sonatype.com/](https://central.sonatype.com/)
-2. **Account** → **Generate User Token**
-3. Put it in `~/.m2/settings.xml` (never commit this file):
+1. [central.sonatype.com](https://central.sonatype.com/) → **Account** → **Generate User Token**
+2. `~/.m2/settings.xml` (never commit):
 
 ```xml
 <settings>
@@ -49,23 +47,22 @@ Remember the passphrase. Maven will ask for it when signing.
 </settings>
 ```
 
-The `<id>` must be `central` (matches `publishingServerId` in the parent POM).
+`<id>` must be `central`.
 
 ## 4. Deploy
 
 ```bash
 export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-cd /path/to/sinaq-api-java
 mvn -P release clean deploy
 ```
 
-`autoPublish` is **false**: the bundle is uploaded and validated, then you click **Publish** in the Portal.
+`autoPublish` is **false**: upload → validate → click **Publish** in the Portal.
 
-After it is live (often 10–30 minutes):
+After it is live:
 
 ```xml
 <dependency>
-  <groupId>io.sinaq</groupId>
+  <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
   <version>1.0.0</version>
   <scope>test</scope>
@@ -80,5 +77,3 @@ After it is live (often 10–30 minutes):
 git tag v1.0.0
 git push origin v1.0.0
 ```
-
-Then GitHub → **Releases** → **Create a new release** from `v1.0.0`.

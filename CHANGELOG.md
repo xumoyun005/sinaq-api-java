@@ -16,5 +16,5 @@ First public release (V1–V4 in one version).
 - TestNG listener and JUnit 5 extension
 
 ### Modules
-Published artifacts use `groupId` `io.sinaq`, version `1.0.0`.
+Published artifacts use `groupId` `uz.sinaq` (domain `sinaq.uz`), version `1.0.0`.
 `examples` and `integration-tests` are not published.

@@ -8,8 +8,9 @@ brand (xumo.com) — creating trademark risk for a global OSS project, and the
 io.xumo groupId would require owning xumo.io.
 
 ## Decision
-Rename to **Sinaq** (Uzbek: "test"). Coordinates: groupId `io.sinaq`,
-packages `io.sinaq.api.*`, artifacts `sinaq-api-*`, exceptions `Sinaq*Exception`.
+Rename to **Sinaq** (Uzbek: "test"). Coordinates: groupId `uz.sinaq`
+(domain `sinaq.uz`), packages `io.sinaq.api.*`, artifacts `sinaq-api-*`,
+exceptions `Sinaq*Exception`.
 
 ## Evidence at decision time
 PyPI `sinaq` and `sinaq-api` free; npm free; no software company/framework found

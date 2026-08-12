@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.sinaq</groupId>
+  <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-parent</artifactId>
   <version>1.0.0</version>
   <packaging>pom</packaging>
@@ -81,72 +81,72 @@
   <dependencyManagement>
     <dependencies>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-core</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-jdk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-jackson</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-jsonpath</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-jsonschema</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-oauth</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-yaml</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-okhttp</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-jdbc</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-openapi</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-wiremock</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-restassured</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-testng</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
-        <groupId>io.sinaq</groupId>
+        <groupId>uz.sinaq</groupId>
         <artifactId>sinaq-api-junit5</artifactId>
         <version>${project.version}</version>
       </dependency>

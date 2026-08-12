@@ -4,9 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>io.sinaq</groupId>
+    <groupId>uz.sinaq</groupId>
     <artifactId>sinaq-api-parent</artifactId>
     <version>1.0.0</version>
+    <relativePath>../pom.xml</relativePath>
   </parent>
   <artifactId>sinaq-api-starter</artifactId>
   <packaging>pom</packaging>
@@ -16,11 +17,11 @@
     Add sinaq-api-junit5, sinaq-api-jdk, sinaq-api-oauth, sinaq-api-yaml explicitly as needed.
   </description>
   <dependencies>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-core</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-restassured</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-jackson</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-jsonpath</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-jsonschema</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-testng</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-core</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-restassured</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-jackson</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-jsonpath</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-jsonschema</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>uz.sinaq</groupId><artifactId>sinaq-api-testng</artifactId><version>${project.version}</version></dependency>
   </dependencies>
 </project>
