@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SchemaValidator.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.assertion</a> &gt; <span class="el_source">SchemaValidator.java</span></div><h1>SchemaValidator.java</h1><pre class="source lang-java linenums">package io.sinaq.api.assertion;
+
+import io.sinaq.api.exception.SinaqConfigurationException;
+
+/**
+ * JSON Schema validation SPI (V2). Default rejects — add {@code sinaq-api-jsonschema}.
+ */
+public interface SchemaValidator {
+
+    void validate(String jsonBody, String schemaJson);
+
+    static SchemaValidator unsupported() {
+<span class="fc" id="L13">        return (body, schema) -&gt; {</span>
+<span class="nc" id="L14">            throw new SinaqConfigurationException(</span>
+                    &quot;JSON Schema validation requires the sinaq-api-jsonschema module &quot;
+                    + &quot;and ApiClient.builder().schemaValidator(...)&quot;);
+        };
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

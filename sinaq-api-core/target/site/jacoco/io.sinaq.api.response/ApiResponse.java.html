@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.response</a> &gt; <span class="el_source">ApiResponse.java</span></div><h1>ApiResponse.java</h1><pre class="source lang-java linenums">package io.sinaq.api.response;
+
+import io.sinaq.api.SinaqRuntime;
+import io.sinaq.api.assertion.SchemaValidator;
+import io.sinaq.api.assertion.SoftAssertions;
+import io.sinaq.api.events.EventType;
+import io.sinaq.api.events.ReportEvent;
+import io.sinaq.api.exception.SinaqAssertionException;
+import io.sinaq.api.exception.SinaqSerializationException;
+import io.sinaq.api.extraction.ExtractionProvider;
+import io.sinaq.api.http.HttpCookie;
+import io.sinaq.api.http.HttpRequest;
+import io.sinaq.api.http.HttpResponse;
+import io.sinaq.api.http.HttpStatus;
+import io.sinaq.api.internal.json.Json;
+import io.sinaq.api.masking.Masker;
+import io.sinaq.api.serialization.SerializationProvider;
+
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.regex.Pattern;
+
+/**
+ * Framework-independent response (spec §9) with the fluent assertion API
+ * (spec §13, V2 advanced assertions). Assertions are fail-fast by default;
+ * use {@link #soft()} for batched failures. Immutable and thread-safe.
+ */
+public final class ApiResponse {
+
+    private final HttpRequest request;
+    private final HttpResponse http;
+    private final SerializationProvider serializer;
+    private final ExtractionProvider extractor;
+    private final SchemaValidator schemaValidator;
+    private final Masker masker;
+
+    private volatile Object jsonTree;
+    private volatile boolean jsonParsed;
+
+    public ApiResponse(HttpRequest request, HttpResponse http,
+                       SerializationProvider serializer,
+                       ExtractionProvider extractor,
+                       SchemaValidator schemaValidator,
+<span class="fc" id="L48">                       Masker masker) {</span>
+<span class="fc" id="L49">        this.request = Objects.requireNonNull(request, &quot;request&quot;);</span>
+<span class="fc" id="L50">        this.http = Objects.requireNonNull(http, &quot;http&quot;);</span>
+<span class="fc" id="L51">        this.serializer = Objects.requireNonNull(serializer, &quot;serializer&quot;);</span>
+<span class="fc" id="L52">        this.extractor = Objects.requireNonNull(extractor, &quot;extractor&quot;);</span>
+<span class="fc" id="L53">        this.schemaValidator = Objects.requireNonNull(schemaValidator, &quot;schemaValidator&quot;);</span>
+<span class="fc" id="L54">        this.masker = Objects.requireNonNull(masker, &quot;masker&quot;);</span>
+<span class="fc" id="L55">    }</span>
+
+    // ---------- data access (spec §9) ----------
+
+<span class="fc" id="L59">    public int status()                    { return http.statusCode(); }</span>
+<span class="fc" id="L60">    public HttpStatus statusValue()        { return http.status(); }</span>
+<span class="fc" id="L61">    public Optional&lt;String&gt; statusText()   { return http.statusText(); }</span>
+<span class="fc" id="L62">    public byte[] rawBody()                { return http.rawBody(); }</span>
+<span class="fc" id="L63">    public String text()                   { return new String(http.rawBody(), StandardCharsets.UTF_8); }</span>
+<span class="nc" id="L64">    public String body()                   { return text(); }</span>
+<span class="fc" id="L65">    public Optional&lt;String&gt; header(String name) { return http.headers().first(name); }</span>
+<span class="fc" id="L66">    public Map&lt;String, List&lt;String&gt;&gt; headers()  { return http.headers().asMap(); }</span>
+    public Optional&lt;HttpCookie&gt; cookie(String name) {
+<span class="nc" id="L68">        return http.cookies().stream().filter(c -&gt; c.name().equals(name)).findFirst();</span>
+    }
+<span class="fc" id="L70">    public Duration responseTime()         { return http.responseTime(); }</span>
+<span class="fc" id="L71">    public HttpRequest request()           { return request; }</span>
+
+    public Object jsonPath() {
+<span class="fc bfc" id="L74" title="All 2 branches covered.">        if (!jsonParsed) {</span>
+<span class="fc" id="L75">            synchronized (this) {</span>
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">                if (!jsonParsed) {</span>
+<span class="fc" id="L77">                    jsonTree = Json.parse(text());</span>
+<span class="fc" id="L78">                    jsonParsed = true;</span>
+                }
+<span class="fc" id="L80">            }</span>
+        }
+<span class="fc" id="L82">        return jsonTree;</span>
+    }
+
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T extract(String path) {
+<span class="fc" id="L87">        return (T) extractor.extract(jsonPath(), path);</span>
+    }
+
+    /** Extracts a list at the path (V2). */
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; List&lt;T&gt; extractList(String path) {
+<span class="fc" id="L93">        Object value = extract(path);</span>
+<span class="fc bfc" id="L94" title="All 2 branches covered.">        if (value instanceof List&lt;?&gt; list) {</span>
+<span class="fc" id="L95">            return (List&lt;T&gt;) list;</span>
+        }
+<span class="fc" id="L97">        throw new SinaqSerializationException(</span>
+                &quot;Path '&quot; + path + &quot;' did not resolve to a list, got: &quot;
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">                + (value == null ? &quot;null&quot; : value.getClass().getName()));</span>
+    }
+
+    public &lt;T&gt; T as(Class&lt;T&gt; type) {
+        try {
+<span class="fc" id="L104">            return serializer.deserialize(text(), type);</span>
+<span class="nc" id="L105">        } catch (SinaqSerializationException e) {</span>
+<span class="nc" id="L106">            throw e;</span>
+<span class="nc" id="L107">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L108">            throw new SinaqSerializationException(&quot;Failed to deserialize response as &quot; + type.getName(), e,</span>
+<span class="nc" id="L109">                    request.context().correlationId().orElse(null));</span>
+        }
+    }
+
+    // ---------- assertions (spec §13 + V2) ----------
+
+    public ApiResponse expectStatus(int expected) {
+<span class="fc bfc" id="L116" title="All 2 branches covered.">        return check(&quot;status == &quot; + expected, expected, status(), status() == expected);</span>
+    }
+
+    public ApiResponse expectHeader(String name, String expected) {
+<span class="nc" id="L120">        String actual = header(name).orElse(null);</span>
+<span class="nc" id="L121">        return check(&quot;header '&quot; + name + &quot;' == '&quot; + expected + &quot;'&quot;, expected, actual,</span>
+<span class="nc" id="L122">                Objects.equals(expected, actual));</span>
+    }
+
+    public ApiResponse expect(String path, Object expected) {
+<span class="fc" id="L126">        Object actual = extract(path);</span>
+<span class="fc" id="L127">        return check(&quot;json '&quot; + path + &quot;' == &quot; + expected, expected, actual, valueEquals(expected, actual));</span>
+    }
+
+    public ApiResponse expectEquals(String path, Object expected) {
+<span class="fc" id="L131">        return expect(path, expected);</span>
+    }
+
+    public ApiResponse expectNotNull(String path) {
+<span class="fc" id="L135">        Object actual = extract(path);</span>
+<span class="fc bfc" id="L136" title="All 2 branches covered.">        return check(&quot;json '&quot; + path + &quot;' is not null&quot;, &quot;non-null&quot;, actual, actual != null);</span>
+    }
+
+    public ApiResponse expectNull(String path) {
+<span class="fc" id="L140">        Object actual = extract(path);</span>
+<span class="fc bfc" id="L141" title="All 2 branches covered.">        return check(&quot;json '&quot; + path + &quot;' is null&quot;, null, actual, actual == null);</span>
+    }
+
+    public ApiResponse expectContains(String substring) {
+<span class="fc" id="L145">        Objects.requireNonNull(substring, &quot;substring&quot;);</span>
+<span class="fc" id="L146">        return check(&quot;body contains '&quot; + substring + &quot;'&quot;, substring, &quot;&lt;body:&quot; + text().length() + &quot; chars&gt;&quot;,</span>
+<span class="fc" id="L147">                text().contains(substring));</span>
+    }
+
+    /** Asserts body matches regex (V2). */
+    public ApiResponse expectMatches(String regex) {
+<span class="fc" id="L152">        Objects.requireNonNull(regex, &quot;regex&quot;);</span>
+<span class="fc" id="L153">        Pattern pattern = Pattern.compile(regex);</span>
+<span class="nc" id="L154">        return check(&quot;body matches /&quot; + regex + &quot;/&quot;, regex, text(), pattern.matcher(text()).find());</span>
+    }
+
+    /** Asserts JSON array at path has expected size (V2). */
+    public ApiResponse expectArraySize(String path, int expected) {
+<span class="fc" id="L159">        List&lt;?&gt; list = extractList(path);</span>
+<span class="pc" id="L160">        return check(&quot;json '&quot; + path + &quot;' array size == &quot; + expected, expected, list.size(),</span>
+<span class="pc bpc" id="L161" title="1 of 2 branches missed.">                list.size() == expected);</span>
+    }
+
+    public ApiResponse expectResponseTimeLessThan(Duration max) {
+<span class="fc" id="L165">        Objects.requireNonNull(max, &quot;max&quot;);</span>
+<span class="fc bfc" id="L166" title="All 2 branches covered.">        return check(&quot;responseTime &lt; &quot; + max, max, responseTime(), responseTime().compareTo(max) &lt; 0);</span>
+    }
+
+    /** Validates body against JSON Schema (V2 — requires sinaq-api-jsonschema). */
+    public ApiResponse expectSchema(String schemaJson) {
+<span class="fc" id="L171">        Objects.requireNonNull(schemaJson, &quot;schemaJson&quot;);</span>
+        try {
+<span class="fc" id="L173">            schemaValidator.validate(text(), schemaJson);</span>
+<span class="fc" id="L174">            return check(&quot;body matches JSON schema&quot;, &quot;valid&quot;, &quot;valid&quot;, true);</span>
+<span class="nc" id="L175">        } catch (RuntimeException e) {</span>
+<span class="nc" id="L176">            return check(&quot;body matches JSON schema&quot;, &quot;valid&quot;, e.getMessage(), false);</span>
+        }
+    }
+
+    /** Soft-assert mode — failures collected until {@link SoftAssertions#assertAll()}. */
+    public SoftAssertions soft() {
+<span class="fc" id="L182">        return new SoftAssertions(this);</span>
+    }
+
+    // ---------- internals ----------
+
+    private static boolean valueEquals(Object expected, Object actual) {
+<span class="pc bpc" id="L188" title="1 of 4 branches missed.">        if (expected instanceof Number en &amp;&amp; actual instanceof Number an) {</span>
+<span class="pc bpc" id="L189" title="2 of 4 branches missed.">            if (isIntegral(en) &amp;&amp; isIntegral(an)) {</span>
+<span class="fc bfc" id="L190" title="All 2 branches covered.">                return en.longValue() == an.longValue();</span>
+            }
+<span class="nc bnc" id="L192" title="All 2 branches missed.">            return Double.compare(en.doubleValue(), an.doubleValue()) == 0;</span>
+        }
+<span class="fc" id="L194">        return Objects.equals(expected, actual);</span>
+    }
+
+    private static boolean isIntegral(Number n) {
+<span class="pc bpc" id="L198" title="5 of 8 branches missed.">        return n instanceof Long || n instanceof Integer || n instanceof Short || n instanceof Byte;</span>
+    }
+
+    private ApiResponse check(String description, Object expected, Object actual, boolean passed) {
+<span class="fc" id="L202">        publishAssertion(passed, description, expected, actual);</span>
+<span class="fc bfc" id="L203" title="All 2 branches covered.">        if (!passed) {</span>
+<span class="fc" id="L204">            throw new SinaqAssertionException(</span>
+                    &quot;Assertion failed: &quot; + description
+                    + &quot; | expected: &quot; + expected + &quot; | actual: &quot; + actual
+<span class="fc" id="L207">                    + &quot; | &quot; + request.method() + &quot; &quot; + request.uri() + &quot; -&gt; &quot; + status(),</span>
+<span class="fc" id="L208">                    null, request.context().correlationId().orElse(null));</span>
+        }
+<span class="fc" id="L210">        return this;</span>
+    }
+
+    private void publishAssertion(boolean passed, String description, Object expected, Object actual) {
+<span class="fc" id="L214">        var ctx = request.context();</span>
+<span class="fc" id="L215">        SinaqRuntime.publisher().publish(ReportEvent.builder(</span>
+<span class="fc bfc" id="L216" title="All 2 branches covered.">                        passed ? EventType.ASSERTION_PASSED : EventType.ASSERTION_FAILED,</span>
+<span class="fc" id="L217">                        SinaqRuntime.executionContext().executionId())</span>
+<span class="fc" id="L218">                .requestId(ctx.requestId())</span>
+<span class="fc" id="L219">                .correlationId(ctx.correlationId().orElse(null))</span>
+<span class="fc" id="L220">                .testId(currentTestId())</span>
+<span class="fc" id="L221">                .payload(Map.of(</span>
+                        &quot;assertion&quot;, description,
+<span class="fc" id="L223">                        &quot;expected&quot;, String.valueOf(masker.maskText(String.valueOf(expected))),</span>
+<span class="fc" id="L224">                        &quot;actual&quot;, String.valueOf(masker.maskText(String.valueOf(actual)))))</span>
+<span class="fc" id="L225">                .build());</span>
+<span class="fc" id="L226">    }</span>
+
+    private static String currentTestId() {
+<span class="fc" id="L229">        var t = io.sinaq.api.context.SinaqTestContextHolder.get();</span>
+<span class="pc bpc" id="L230" title="1 of 2 branches missed.">        return t == null ? null : t.testId();</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

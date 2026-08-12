@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Masker.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.masking</a> &gt; <span class="el_source">Masker.java</span></div><h1>Masker.java</h1><pre class="source lang-java linenums">package io.sinaq.api.masking;
+
+import io.sinaq.api.http.HttpHeaders;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.regex.Pattern;
+
+/**
+ * Masks sensitive values before they reach logs, events or reports (spec §28).
+ *
+ * &lt;p&gt;Rule of the framework: masking happens BEFORE a {@code ReportEvent} payload
+ * is created — no listener may ever observe an unmasked secret.&lt;/p&gt;
+ *
+ * &lt;p&gt;Default sensitive names (case-insensitive substring match on field/header
+ * names): authorization, password, token, refreshToken, accessToken, secret,
+ * apiKey/x-api-key, pin, cvv, cvc, otp, smsCode. Additionally any 13–19 digit
+ * run (possible card number/PAN) inside text is masked — deliberately
+ * aggressive: a masked test id is cheaper than a leaked card number.&lt;/p&gt;
+ *
+ * &lt;p&gt;Immutable; thread-safe. Build custom instances via {@link #builder()}.&lt;/p&gt;
+ */
+public final class Masker {
+
+    public static final String MASK = &quot;****&quot;;
+
+<span class="fc" id="L31">    private static final List&lt;String&gt; DEFAULT_NAME_MARKERS = List.of(</span>
+            &quot;authorization&quot;, &quot;password&quot;, &quot;token&quot;, &quot;secret&quot;,
+            &quot;apikey&quot;, &quot;api-key&quot;, &quot;api_key&quot;, &quot;pin&quot;, &quot;cvv&quot;, &quot;cvc&quot;, &quot;otp&quot;, &quot;smscode&quot;, &quot;sms_code&quot;);
+
+    /** 13–19 consecutive digits, optionally space/dash separated (candidate PAN). */
+<span class="fc" id="L36">    private static final Pattern PAN = Pattern.compile(&quot;\\b\\d(?:[ -]?\\d){12,18}\\b&quot;);</span>
+
+    /** Auth scheme credentials anywhere in text (e.g. echoed back in a body). */
+<span class="fc" id="L39">    private static final Pattern BEARER_VALUE =</span>
+<span class="fc" id="L40">            Pattern.compile(&quot;(?i)\\bBearer\\s+[A-Za-z0-9._~+/=-]+&quot;);</span>
+<span class="fc" id="L41">    private static final Pattern BASIC_VALUE =</span>
+<span class="fc" id="L42">            Pattern.compile(&quot;(?i)\\bBasic\\s+[A-Za-z0-9+/=]+&quot;);</span>
+
+<span class="fc" id="L44">    private static final Masker DEFAULTS = builder().build();</span>
+
+    private final List&lt;String&gt; nameMarkers;         // lower-case
+    private final List&lt;Pattern&gt; valuePatterns;      // masked wherever they match in text
+    private final Pattern jsonFieldPattern;         // built from nameMarkers
+
+<span class="fc" id="L50">    private Masker(List&lt;String&gt; nameMarkers, List&lt;Pattern&gt; valuePatterns) {</span>
+<span class="fc" id="L51">        this.nameMarkers = nameMarkers;</span>
+<span class="fc" id="L52">        this.valuePatterns = valuePatterns;</span>
+<span class="fc" id="L53">        this.jsonFieldPattern = buildJsonFieldPattern(nameMarkers);</span>
+<span class="fc" id="L54">    }</span>
+
+    /** Masker with the default rules. */
+    public static Masker defaults() {
+<span class="fc" id="L58">        return DEFAULTS;</span>
+    }
+
+    public static Builder builder() {
+<span class="fc" id="L62">        return new Builder();</span>
+    }
+
+    /** True if a field/header with this name must have its value masked. */
+    public boolean isSensitiveName(String name) {
+<span class="pc bpc" id="L67" title="1 of 2 branches missed.">        if (name == null) {</span>
+<span class="nc" id="L68">            return false;</span>
+        }
+<span class="fc" id="L70">        String n = name.toLowerCase(Locale.ROOT);</span>
+<span class="fc" id="L71">        return nameMarkers.stream().anyMatch(n::contains);</span>
+    }
+
+    /**
+     * Masks a named value. Sensitive names keep a recognizable auth scheme prefix
+     * ({@code Bearer ****}, {@code Basic ****}); everything else becomes {@code ****}.
+     * Non-sensitive names are still scanned for PAN/value patterns.
+     */
+    public String maskValue(String name, String value) {
+<span class="pc bpc" id="L80" title="1 of 2 branches missed.">        if (value == null) {</span>
+<span class="nc" id="L81">            return null;</span>
+        }
+<span class="fc bfc" id="L83" title="All 2 branches covered.">        if (isSensitiveName(name)) {</span>
+<span class="fc" id="L84">            String trimmed = value.trim();</span>
+<span class="fc" id="L85">            String lower = trimmed.toLowerCase(Locale.ROOT);</span>
+<span class="fc bfc" id="L86" title="All 2 branches covered.">            if (lower.startsWith(&quot;bearer &quot;)) {</span>
+<span class="fc" id="L87">                return trimmed.substring(0, &quot;Bearer&quot;.length()) + &quot; &quot; + MASK;</span>
+            }
+<span class="fc bfc" id="L89" title="All 2 branches covered.">            if (lower.startsWith(&quot;basic &quot;)) {</span>
+<span class="fc" id="L90">                return trimmed.substring(0, &quot;Basic&quot;.length()) + &quot; &quot; + MASK;</span>
+            }
+<span class="fc" id="L92">            return MASK;</span>
+        }
+<span class="fc" id="L94">        return maskText(value);</span>
+    }
+
+    /** Masks sensitive JSON fields and PAN-like digit runs inside free text/JSON. */
+    public String maskText(String text) {
+<span class="pc bpc" id="L99" title="1 of 4 branches missed.">        if (text == null || text.isEmpty()) {</span>
+<span class="fc" id="L100">            return text;</span>
+        }
+<span class="fc" id="L102">        String out = jsonFieldPattern.matcher(text).replaceAll(&quot;$1&quot; + MASK + &quot;$3&quot;);</span>
+<span class="fc" id="L103">        out = BEARER_VALUE.matcher(out).replaceAll(&quot;Bearer &quot; + MASK);</span>
+<span class="fc" id="L104">        out = BASIC_VALUE.matcher(out).replaceAll(&quot;Basic &quot; + MASK);</span>
+<span class="fc" id="L105">        out = PAN.matcher(out).replaceAll(MASK);</span>
+<span class="fc bfc" id="L106" title="All 2 branches covered.">        for (Pattern p : valuePatterns) {</span>
+<span class="fc" id="L107">            out = p.matcher(out).replaceAll(MASK);</span>
+<span class="fc" id="L108">        }</span>
+<span class="fc" id="L109">        return out;</span>
+    }
+
+    /** Masked copy of headers as an ordered name→values map (for events/logs). */
+    public Map&lt;String, List&lt;String&gt;&gt; maskHeaders(HttpHeaders headers) {
+<span class="fc" id="L114">        Map&lt;String, List&lt;String&gt;&gt; out = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L115">        headers.asMap().forEach((name, values) -&gt; {</span>
+<span class="fc" id="L116">            List&lt;String&gt; masked = values.stream().map(v -&gt; maskValue(name, v)).toList();</span>
+<span class="fc" id="L117">            out.put(name, masked);</span>
+<span class="fc" id="L118">        });</span>
+<span class="fc" id="L119">        return java.util.Collections.unmodifiableMap(out);</span>
+    }
+
+    private static Pattern buildJsonFieldPattern(List&lt;String&gt; markers) {
+        // (&quot;name&quot; :) &quot;value&quot;  -&gt;  $1 **** $3   for any field whose name contains a marker
+<span class="fc" id="L124">        String alternation = String.join(&quot;|&quot;, markers.stream().map(Pattern::quote).toList());</span>
+<span class="fc" id="L125">        return Pattern.compile(</span>
+                &quot;(\&quot;[^\&quot;]*(?i:&quot; + alternation + &quot;)[^\&quot;]*\&quot;\\s*:\\s*\&quot;)([^\&quot;]*)(\&quot;)&quot;);
+    }
+
+    /** Mutable builder. NOT thread-safe; confine to one thread. */
+    public static final class Builder {
+
+<span class="fc" id="L132">        private final List&lt;String&gt; markers = new ArrayList&lt;&gt;(DEFAULT_NAME_MARKERS);</span>
+<span class="fc" id="L133">        private final List&lt;Pattern&gt; valuePatterns = new ArrayList&lt;&gt;();</span>
+
+<span class="fc" id="L135">        private Builder() {}</span>
+
+        /** Adds a custom sensitive name marker (case-insensitive substring). */
+        public Builder sensitiveName(String marker) {
+<span class="fc" id="L139">            Objects.requireNonNull(marker, &quot;marker&quot;);</span>
+<span class="fc" id="L140">            markers.add(marker.toLowerCase(Locale.ROOT));</span>
+<span class="fc" id="L141">            return this;</span>
+        }
+
+        /** Adds a custom regex; every match in scanned text is replaced with the mask. */
+        public Builder valuePattern(Pattern pattern) {
+<span class="fc" id="L146">            valuePatterns.add(Objects.requireNonNull(pattern, &quot;pattern&quot;));</span>
+<span class="fc" id="L147">            return this;</span>
+        }
+
+        public Masker build() {
+<span class="fc" id="L151">            return new Masker(List.copyOf(markers), List.copyOf(valuePatterns));</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

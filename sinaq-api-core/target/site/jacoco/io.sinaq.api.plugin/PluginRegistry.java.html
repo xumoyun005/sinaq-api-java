@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PluginRegistry.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.plugin</a> &gt; <span class="el_source">PluginRegistry.java</span></div><h1>PluginRegistry.java</h1><pre class="source lang-java linenums">package io.sinaq.api.plugin;
+
+import io.sinaq.api.SinaqRuntime;
+import io.sinaq.api.events.EventType;
+import io.sinaq.api.events.ReportEvent;
+
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+
+/**
+ * Global plugin registry (V2). Thread-safe; plugins are loaded at startup
+ * or registered programmatically before client build.
+ */
+<span class="fc" id="L15">public final class PluginRegistry {</span>
+
+<span class="fc" id="L17">    private static final PluginRegistry GLOBAL = new PluginRegistry();</span>
+<span class="fc" id="L18">    private final CopyOnWriteArrayList&lt;SinaqPlugin&gt; plugins = new CopyOnWriteArrayList&lt;&gt;();</span>
+
+    public static PluginRegistry global() {
+<span class="fc" id="L21">        return GLOBAL;</span>
+    }
+
+    public void register(SinaqPlugin plugin) {
+<span class="fc" id="L25">        plugins.addIfAbsent(plugin);</span>
+<span class="fc" id="L26">        SinaqRuntime.publisher().publish(ReportEvent.builder(</span>
+<span class="fc" id="L27">                        EventType.PLUGIN_LOADED, SinaqRuntime.executionContext().executionId())</span>
+<span class="fc" id="L28">                .payload(Map.of(&quot;pluginId&quot;, plugin.id()))</span>
+<span class="fc" id="L29">                .build());</span>
+<span class="fc" id="L30">    }</span>
+
+    public List&lt;SinaqPlugin&gt; plugins() {
+<span class="fc" id="L33">        return List.copyOf(plugins);</span>
+    }
+
+    public void clear() {
+<span class="fc" id="L37">        plugins.clear();</span>
+<span class="fc" id="L38">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

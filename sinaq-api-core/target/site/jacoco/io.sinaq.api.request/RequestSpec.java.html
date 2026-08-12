@@ -1,0 +1,510 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RequestSpec.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.request</a> &gt; <span class="el_source">RequestSpec.java</span></div><h1>RequestSpec.java</h1><pre class="source lang-java linenums">package io.sinaq.api.request;
+
+import io.sinaq.api.SinaqRuntime;
+import io.sinaq.api.auth.ApiKeyAuth;
+import io.sinaq.api.auth.AuthProvider;
+import io.sinaq.api.auth.BasicAuth;
+import io.sinaq.api.auth.BearerAuth;
+import io.sinaq.api.client.ApiClient;
+import io.sinaq.api.config.RetryPolicy;
+import io.sinaq.api.config.SinaqConfig;
+import io.sinaq.api.context.RequestContext;
+import io.sinaq.api.context.SinaqTestContextHolder;
+import io.sinaq.api.context.TestContext;
+import io.sinaq.api.events.EventType;
+import io.sinaq.api.events.ReportEvent;
+import io.sinaq.api.exception.SinaqConfigurationException;
+import io.sinaq.api.exception.SinaqEngineException;
+import io.sinaq.api.exception.SinaqException;
+import io.sinaq.api.exception.SinaqTimeoutException;
+import io.sinaq.api.graphql.GraphQl;
+import io.sinaq.api.http.MultipartBody;
+import io.sinaq.api.http.HttpBody;
+import io.sinaq.api.http.HttpCookie;
+import io.sinaq.api.interceptor.RequestInterceptor;
+import io.sinaq.api.http.HttpHeaders;
+import io.sinaq.api.http.HttpMethod;
+import io.sinaq.api.http.HttpResponse;
+import io.sinaq.api.http.HttpTimeout;
+import io.sinaq.api.metrics.RequestMetrics;
+import io.sinaq.api.polling.PollSpec;
+import io.sinaq.api.response.ApiResponse;
+
+import java.net.URI;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+
+/**
+ * Mutable, THREAD-CONFINED fluent request builder (spec §10–11).
+ *
+ * &lt;p&gt;Create → configure → execute in one thread; never share an instance and
+ * never reuse it after execution. {@code expect*} methods are sugar: the first
+ * one triggers {@link #execute()} exactly once and delegates to the resulting
+ * {@link ApiResponse} (ADR-006).&lt;/p&gt;
+ */
+public final class RequestSpec {
+
+    private final ApiClient client;
+    private final HttpMethod method;
+    private final String path;
+
+<span class="fc" id="L60">    private final HttpHeaders.Builder headers = HttpHeaders.builder();</span>
+<span class="fc" id="L61">    private final Set&lt;String&gt; overriddenHeaderNames = new HashSet&lt;&gt;();</span>
+<span class="fc" id="L62">    private final Map&lt;String, String&gt; pathParams = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc" id="L63">    private final List&lt;String[]&gt; queryParams = new ArrayList&lt;&gt;();</span>
+<span class="fc" id="L64">    private final List&lt;HttpCookie&gt; cookies = new ArrayList&lt;&gt;();</span>
+
+    private HttpBody body;
+    private MultipartBody.Builder multipart;
+    private AuthProvider auth;
+    private HttpTimeout timeout;
+    private RetryPolicy retry;
+    private String correlationId;
+    private String cacheKey;
+<span class="fc" id="L73">    private boolean cachingEnabled = true;</span>
+
+    private ApiResponse response;   // set once by execute()
+
+    /** Created by {@link ApiClient}; not for direct construction. */
+<span class="fc" id="L78">    public RequestSpec(ApiClient client, HttpMethod method, String path) {</span>
+<span class="fc" id="L79">        this.client = Objects.requireNonNull(client, &quot;client&quot;);</span>
+<span class="fc" id="L80">        this.method = Objects.requireNonNull(method, &quot;method&quot;);</span>
+<span class="fc" id="L81">        this.path = Objects.requireNonNull(path, &quot;path&quot;);</span>
+<span class="fc" id="L82">        this.retry = client.config().defaultRetry();</span>
+<span class="fc" id="L83">    }</span>
+
+    private RequestSpec(ApiClient client, HttpMethod method, String path, boolean internal) {
+<span class="fc" id="L86">        this(client, method, path);</span>
+<span class="fc" id="L87">    }</span>
+
+    // ---------- building (spec §11) ----------
+
+    /** Sets a header; first call for a name overrides any client default. */
+    public RequestSpec header(String name, String value) {
+<span class="fc bfc" id="L93" title="All 2 branches covered.">        if (overriddenHeaderNames.add(name.toLowerCase(java.util.Locale.ROOT))) {</span>
+<span class="fc" id="L94">            headers.set(name, value);</span>
+        } else {
+<span class="fc" id="L96">            headers.add(name, value);</span>
+        }
+<span class="fc" id="L98">        return this;</span>
+    }
+
+    public RequestSpec headers(Map&lt;String, String&gt; map) {
+<span class="nc" id="L102">        map.forEach(this::header);</span>
+<span class="nc" id="L103">        return this;</span>
+    }
+
+    public RequestSpec queryParam(String name, Object value) {
+<span class="fc" id="L107">        queryParams.add(new String[]{Objects.requireNonNull(name, &quot;name&quot;), String.valueOf(value)});</span>
+<span class="fc" id="L108">        return this;</span>
+    }
+
+    public RequestSpec queryParams(Map&lt;String, ?&gt; map) {
+<span class="fc" id="L112">        map.forEach(this::queryParam);</span>
+<span class="fc" id="L113">        return this;</span>
+    }
+
+    public RequestSpec pathParam(String name, Object value) {
+<span class="fc" id="L117">        pathParams.put(Objects.requireNonNull(name, &quot;name&quot;), String.valueOf(value));</span>
+<span class="fc" id="L118">        return this;</span>
+    }
+
+    public RequestSpec pathParams(Map&lt;String, ?&gt; map) {
+<span class="nc" id="L122">        map.forEach(this::pathParam);</span>
+<span class="nc" id="L123">        return this;</span>
+    }
+
+    public RequestSpec cookie(String name, String value) {
+<span class="fc" id="L127">        cookies.add(HttpCookie.of(name, value));</span>
+<span class="fc" id="L128">        return this;</span>
+    }
+
+    /** Serializes the object via the client's SerializationProvider as JSON. */
+    public RequestSpec body(Object value) {
+<span class="fc bfc" id="L133" title="All 2 branches covered.">        if (value instanceof String s) {</span>
+<span class="fc" id="L134">            return json(s);</span>
+        }
+<span class="fc" id="L136">        this.body = HttpBody.ofJson(client.serializer().serialize(value));</span>
+<span class="fc" id="L137">        return this;</span>
+    }
+
+    /** Raw JSON body. */
+    public RequestSpec json(String rawJson) {
+<span class="fc" id="L142">        this.body = HttpBody.ofJson(rawJson);</span>
+<span class="fc" id="L143">        return this;</span>
+    }
+
+    /** Plain text body. */
+    public RequestSpec text(String text) {
+<span class="fc" id="L148">        this.body = HttpBody.ofText(text);</span>
+<span class="fc" id="L149">        return this;</span>
+    }
+
+    /** application/x-www-form-urlencoded body from ordered pairs. */
+    public RequestSpec form(Map&lt;String, ?&gt; fields) {
+<span class="fc" id="L154">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L155">        fields.forEach((k, v) -&gt; {</span>
+<span class="pc bpc" id="L156" title="1 of 2 branches missed.">            if (!sb.isEmpty()) sb.append('&amp;');</span>
+<span class="fc" id="L157">            sb.append(encode(k)).append('=').append(encode(String.valueOf(v)));</span>
+<span class="fc" id="L158">        });</span>
+<span class="fc" id="L159">        this.body = HttpBody.ofBytes(sb.toString().getBytes(StandardCharsets.UTF_8), HttpBody.FORM);</span>
+<span class="fc" id="L160">        return this;</span>
+    }
+
+    /** Multipart form field (V3). */
+    public RequestSpec multiPart(String name, String value) {
+<span class="pc bpc" id="L165" title="1 of 2 branches missed.">        if (multipart == null) {</span>
+<span class="fc" id="L166">            multipart = MultipartBody.builder();</span>
+        }
+<span class="fc" id="L168">        multipart.part(name, value);</span>
+<span class="fc" id="L169">        return this;</span>
+    }
+
+    /** Multipart file upload (V3). */
+    public RequestSpec multiPartFile(String name, byte[] bytes, String filename) {
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        if (multipart == null) {</span>
+<span class="nc" id="L175">            multipart = MultipartBody.builder();</span>
+        }
+<span class="fc" id="L177">        multipart.file(name, bytes, filename);</span>
+<span class="fc" id="L178">        return this;</span>
+    }
+
+    /** GraphQL query body (V3). */
+    public RequestSpec graphql(String query) {
+<span class="fc" id="L183">        return body(GraphQl.query(query));</span>
+    }
+
+    /** GraphQL query with variables (V3). */
+    public RequestSpec graphql(String query, Map&lt;String, ?&gt; variables) {
+<span class="fc" id="L188">        return body(GraphQl.query(query, variables));</span>
+    }
+
+<span class="fc" id="L191">    public RequestSpec bearer(String token)                    { this.auth = new BearerAuth(token); return this; }</span>
+<span class="fc" id="L192">    public RequestSpec basicAuth(String user, String password) { this.auth = new BasicAuth(user, password); return this; }</span>
+<span class="fc" id="L193">    public RequestSpec apiKey(String key)                      { this.auth = new ApiKeyAuth(key); return this; }</span>
+<span class="fc" id="L194">    public RequestSpec auth(AuthProvider provider)             { this.auth = provider; return this; }</span>
+
+    public RequestSpec timeout(HttpTimeout timeout) {
+<span class="fc" id="L197">        this.timeout = Objects.requireNonNull(timeout, &quot;timeout&quot;);</span>
+<span class="fc" id="L198">        return this;</span>
+    }
+
+    public RequestSpec retry(RetryPolicy policy) {
+<span class="fc" id="L202">        this.retry = Objects.requireNonNull(policy, &quot;policy&quot;);</span>
+<span class="fc" id="L203">        return this;</span>
+    }
+
+    public RequestSpec correlationId(String correlationId) {
+<span class="fc" id="L207">        this.correlationId = correlationId;</span>
+<span class="fc" id="L208">        return this;</span>
+    }
+
+    /** Enables response caching under the given key (V4). */
+    public RequestSpec cacheKey(String cacheKey) {
+<span class="fc" id="L213">        this.cacheKey = Objects.requireNonNull(cacheKey, &quot;cacheKey&quot;);</span>
+<span class="fc" id="L214">        return this;</span>
+    }
+
+    /** Disables cache lookup/store for this request (V4). */
+    public RequestSpec noCache() {
+<span class="fc" id="L219">        this.cachingEnabled = false;</span>
+<span class="fc" id="L220">        return this;</span>
+    }
+
+    /** Returns a copy of this spec for polling / parallel use (V2). */
+    public RequestSpec duplicate() {
+<span class="pc bpc" id="L225" title="1 of 2 branches missed.">        if (response != null) {</span>
+<span class="nc" id="L226">            throw new SinaqException(&quot;Cannot duplicate an already-executed RequestSpec&quot;);</span>
+        }
+<span class="fc" id="L228">        RequestSpec copy = new RequestSpec(client, method, path, true);</span>
+<span class="fc" id="L229">        headers.build().asMap().forEach((name, values) -&gt;</span>
+<span class="nc" id="L230">                values.forEach(v -&gt; copy.header(name, v)));</span>
+<span class="fc" id="L231">        copy.pathParams.putAll(this.pathParams);</span>
+<span class="fc" id="L232">        copy.queryParams.addAll(this.queryParams);</span>
+<span class="fc" id="L233">        copy.cookies.addAll(this.cookies);</span>
+<span class="fc" id="L234">        copy.body = this.body;</span>
+<span class="pc bpc" id="L235" title="1 of 2 branches missed.">        copy.multipart = this.multipart != null ? this.multipart.copy() : null;</span>
+<span class="fc" id="L236">        copy.auth = this.auth;</span>
+<span class="fc" id="L237">        copy.timeout = this.timeout;</span>
+<span class="fc" id="L238">        copy.retry = this.retry;</span>
+<span class="fc" id="L239">        copy.correlationId = this.correlationId;</span>
+<span class="fc" id="L240">        copy.cacheKey = this.cacheKey;</span>
+<span class="fc" id="L241">        copy.cachingEnabled = this.cachingEnabled;</span>
+<span class="fc" id="L242">        return copy;</span>
+    }
+
+    /** Poll until condition is met (V2). */
+    public PollSpec poll() {
+<span class="fc" id="L247">        return new PollSpec(this);</span>
+    }
+
+    // ---------- execution ----------
+
+    /** Builds the immutable request, runs it through the engine, returns the response. */
+    public ApiResponse execute() {
+<span class="fc bfc" id="L254" title="All 2 branches covered.">        if (response != null) {</span>
+<span class="fc" id="L255">            throw new SinaqException(&quot;RequestSpec already executed — create a new spec per request&quot;);</span>
+        }
+<span class="fc" id="L257">        SinaqConfig config = client.config();</span>
+<span class="fc bfc" id="L258" title="All 2 branches covered.">        AuthProvider effectiveAuth = auth != null ? auth : config.defaultAuth().orElse(null);</span>
+<span class="fc bfc" id="L259" title="All 2 branches covered.">        if (effectiveAuth != null) {</span>
+<span class="fc" id="L260">            effectiveAuth.apply(this);</span>
+        }
+<span class="fc" id="L262">        ApiRequest request = new ApiRequest(</span>
+                method,
+<span class="fc" id="L264">                buildUri(config),</span>
+<span class="fc" id="L265">                mergeHeaders(config),</span>
+<span class="fc" id="L266">                List.copyOf(cookies),</span>
+<span class="fc" id="L267">                resolveBody(),</span>
+<span class="fc bfc" id="L268" title="All 2 branches covered.">                timeout != null ? timeout : config.timeout(),</span>
+<span class="fc" id="L269">                RequestContext.withCorrelationId(correlationId));</span>
+
+<span class="fc" id="L271">        publish(EventType.REQUEST_CREATED, request, Map.of(</span>
+<span class="fc" id="L272">                &quot;method&quot;, method.name(),</span>
+<span class="fc" id="L273">                &quot;url&quot;, request.uri().toString(),</span>
+<span class="fc" id="L274">                &quot;headers&quot;, client.masker().maskHeaders(request.headers()),</span>
+<span class="fc" id="L275">                &quot;body&quot;, maskedBodyPreview()));</span>
+
+        HttpResponse http;
+<span class="fc bfc" id="L278" title="All 4 branches covered.">        if (cacheKey != null &amp;&amp; cachingEnabled) {</span>
+<span class="fc" id="L279">            HttpResponse cached = client.responseCache().get(cacheKey);</span>
+<span class="fc bfc" id="L280" title="All 2 branches covered.">            if (cached != null) {</span>
+<span class="fc" id="L281">                publish(EventType.CACHE_HIT, request, Map.of(&quot;cacheKey&quot;, cacheKey));</span>
+<span class="fc" id="L282">                http = cached;</span>
+            } else {
+<span class="fc" id="L284">                publish(EventType.CACHE_MISS, request, Map.of(&quot;cacheKey&quot;, cacheKey));</span>
+<span class="fc" id="L285">                http = executeWithRetry(applyInterceptorsBefore(request));</span>
+<span class="fc" id="L286">                http = applyInterceptorsAfter(request, http);</span>
+<span class="fc" id="L287">                client.responseCache().put(cacheKey, http);</span>
+            }
+<span class="fc" id="L289">        } else {</span>
+<span class="fc" id="L290">            http = executeWithRetry(applyInterceptorsBefore(request));</span>
+<span class="fc" id="L291">            http = applyInterceptorsAfter(request, http);</span>
+        }
+
+<span class="fc" id="L294">        ApiResponse api = new ApiResponse(request, http, client.serializer(),</span>
+<span class="fc" id="L295">                client.extractor(), client.schemaValidator(), client.masker());</span>
+<span class="fc" id="L296">        publishMetrics(request, http);</span>
+<span class="fc" id="L297">        publish(EventType.RESPONSE_RECEIVED, request, Map.of(</span>
+<span class="fc" id="L298">                &quot;status&quot;, http.statusCode(),</span>
+<span class="fc" id="L299">                &quot;responseTimeMs&quot;, http.responseTime().toMillis(),</span>
+<span class="fc" id="L300">                &quot;headers&quot;, client.masker().maskHeaders(http.headers()),</span>
+<span class="fc" id="L301">                &quot;body&quot;, preview(client.masker().maskText(api.text()))));</span>
+<span class="fc" id="L302">        this.response = api;</span>
+<span class="fc" id="L303">        return api;</span>
+    }
+
+    private HttpResponse executeWithRetry(ApiRequest request) {
+<span class="fc" id="L307">        int attempt = 0;</span>
+        while (true) {
+<span class="fc" id="L309">            attempt++;</span>
+<span class="fc" id="L310">            publish(EventType.REQUEST_STARTED, request, Map.of(&quot;attempt&quot;, attempt));</span>
+            try {
+<span class="fc" id="L312">                HttpResponse http = client.engine().execute(request);</span>
+<span class="fc" id="L313">                publish(EventType.REQUEST_SENT, request, Map.of(&quot;attempt&quot;, attempt));</span>
+<span class="fc bfc" id="L314" title="All 4 branches covered.">                if (retry.enabled() &amp;&amp; attempt &lt; retry.maxAttempts()</span>
+<span class="fc bfc" id="L315" title="All 2 branches covered.">                        &amp;&amp; retry.onStatusCodes().contains(http.statusCode())) {</span>
+<span class="fc" id="L316">                    sleepBackoff();</span>
+<span class="fc" id="L317">                    continue;</span>
+                }
+<span class="fc" id="L319">                return http;</span>
+<span class="fc" id="L320">            } catch (SinaqTimeoutException e) {</span>
+<span class="pc bpc" id="L321" title="3 of 6 branches missed.">                if (retry.enabled() &amp;&amp; retry.onTimeout() &amp;&amp; attempt &lt; retry.maxAttempts()) {</span>
+<span class="fc" id="L322">                    sleepBackoff();</span>
+<span class="fc" id="L323">                    continue;</span>
+                }
+<span class="nc" id="L325">                publishError(request, e);</span>
+<span class="nc" id="L326">                throw e;</span>
+<span class="fc" id="L327">            } catch (SinaqEngineException e) {</span>
+<span class="pc bpc" id="L328" title="3 of 6 branches missed.">                if (retry.enabled() &amp;&amp; retry.onTransportError() &amp;&amp; attempt &lt; retry.maxAttempts()) {</span>
+<span class="fc" id="L329">                    sleepBackoff();</span>
+<span class="fc" id="L330">                    continue;</span>
+                }
+<span class="nc" id="L332">                publishError(request, e);</span>
+<span class="nc" id="L333">                throw e;</span>
+            }
+        }
+    }
+
+    private void sleepBackoff() {
+<span class="fc" id="L339">        Duration backoff = retry.backoff();</span>
+<span class="pc bpc" id="L340" title="1 of 2 branches missed.">        if (!backoff.isZero()) {</span>
+            try {
+<span class="nc" id="L342">                Thread.sleep(backoff.toMillis());</span>
+<span class="nc" id="L343">            } catch (InterruptedException ie) {</span>
+<span class="nc" id="L344">                Thread.currentThread().interrupt();</span>
+<span class="nc" id="L345">                throw new SinaqException(&quot;Interrupted during retry backoff&quot;, ie);</span>
+<span class="nc" id="L346">            }</span>
+        }
+<span class="fc" id="L348">    }</span>
+
+    // ---------- assertion sugar (ADR-006) ----------
+
+<span class="fc" id="L352">    public ApiResponse expectStatus(int expected)              { return ensureExecuted().expectStatus(expected); }</span>
+<span class="nc" id="L353">    public ApiResponse expect(String path, Object expected)    { return ensureExecuted().expect(path, expected); }</span>
+<span class="nc" id="L354">    public ApiResponse expectNotNull(String path)              { return ensureExecuted().expectNotNull(path); }</span>
+<span class="nc" id="L355">    public ApiResponse expectNull(String path)                 { return ensureExecuted().expectNull(path); }</span>
+<span class="nc" id="L356">    public ApiResponse expectHeader(String name, String value) { return ensureExecuted().expectHeader(name, value); }</span>
+<span class="nc" id="L357">    public ApiResponse expectEquals(String path, Object expected) { return ensureExecuted().expectEquals(path, expected); }</span>
+<span class="nc" id="L358">    public ApiResponse expectMatches(String regex)                 { return ensureExecuted().expectMatches(regex); }</span>
+<span class="nc" id="L359">    public ApiResponse expectArraySize(String path, int size)      { return ensureExecuted().expectArraySize(path, size); }</span>
+<span class="nc" id="L360">    public ApiResponse expectSchema(String schemaJson)             { return ensureExecuted().expectSchema(schemaJson); }</span>
+<span class="nc" id="L361">    public ApiResponse expectContains(String substring)        { return ensureExecuted().expectContains(substring); }</span>
+<span class="nc" id="L362">    public ApiResponse expectResponseTimeLessThan(Duration max){ return ensureExecuted().expectResponseTimeLessThan(max); }</span>
+
+    private ApiResponse ensureExecuted() {
+<span class="pc bpc" id="L365" title="1 of 2 branches missed.">        return response != null ? response : execute();</span>
+    }
+
+    // ---------- internals ----------
+
+    private URI buildUri(SinaqConfig config) {
+<span class="fc" id="L371">        String resolvedPath = path;</span>
+<span class="fc bfc" id="L372" title="All 2 branches covered.">        for (Map.Entry&lt;String, String&gt; e : pathParams.entrySet()) {</span>
+<span class="fc" id="L373">            resolvedPath = resolvedPath.replace(&quot;{&quot; + e.getKey() + &quot;}&quot;, encodePath(e.getValue()));</span>
+<span class="fc" id="L374">        }</span>
+<span class="fc bfc" id="L375" title="All 2 branches covered.">        if (resolvedPath.contains(&quot;{&quot;)) {</span>
+<span class="fc" id="L376">            throw new SinaqConfigurationException(&quot;Unresolved path parameter in: &quot; + resolvedPath);</span>
+        }
+        String base;
+<span class="pc bpc" id="L379" title="1 of 4 branches missed.">        if (resolvedPath.startsWith(&quot;http://&quot;) || resolvedPath.startsWith(&quot;https://&quot;)) {</span>
+<span class="fc" id="L380">            base = resolvedPath;</span>
+        } else {
+<span class="fc" id="L382">            String root = config.baseUrl().orElseThrow(() -&gt; new SinaqConfigurationException(</span>
+                    &quot;No baseUrl configured (set &quot; + io.sinaq.api.config.ConfigKeys.BASE_URL
+                    + &quot; or ApiClient.builder().baseUrl(...))&quot;));
+<span class="fc" id="L385">            base = trimTrailingSlash(root) + ensureLeadingSlash(resolvedPath);</span>
+        }
+<span class="fc bfc" id="L387" title="All 2 branches covered.">        if (!queryParams.isEmpty()) {</span>
+<span class="fc" id="L388">            StringBuilder q = new StringBuilder();</span>
+<span class="fc bfc" id="L389" title="All 2 branches covered.">            for (String[] p : queryParams) {</span>
+<span class="fc bfc" id="L390" title="All 2 branches covered.">                if (!q.isEmpty()) q.append('&amp;');</span>
+<span class="fc" id="L391">                q.append(encode(p[0])).append('=').append(encode(p[1]));</span>
+<span class="fc" id="L392">            }</span>
+<span class="pc bpc" id="L393" title="1 of 2 branches missed.">            base = base + (base.indexOf('?') &gt;= 0 ? &quot;&amp;&quot; : &quot;?&quot;) + q;</span>
+        }
+<span class="fc" id="L395">        return URI.create(base);</span>
+    }
+
+    private HttpHeaders mergeHeaders(SinaqConfig config) {
+<span class="fc" id="L399">        HttpHeaders.Builder merged = config.defaultHeaders().toBuilder();</span>
+<span class="fc" id="L400">        HttpHeaders specHeaders = headers.build();</span>
+<span class="fc bfc" id="L401" title="All 2 branches covered.">        for (String name : specHeaders.names()) {</span>
+<span class="fc" id="L402">            List&lt;String&gt; values = specHeaders.all(name);</span>
+<span class="fc" id="L403">            merged.set(name, values.get(0));</span>
+<span class="fc bfc" id="L404" title="All 2 branches covered.">            for (int i = 1; i &lt; values.size(); i++) {</span>
+<span class="fc" id="L405">                merged.add(name, values.get(i));</span>
+            }
+<span class="fc" id="L407">        }</span>
+<span class="pc bpc" id="L408" title="2 of 6 branches missed.">        if (resolveBody() != null &amp;&amp; resolveBody().contentType().isPresent() &amp;&amp; !specHeaders.contains(&quot;Content-Type&quot;)</span>
+<span class="pc bpc" id="L409" title="1 of 2 branches missed.">                &amp;&amp; !config.defaultHeaders().contains(&quot;Content-Type&quot;)) {</span>
+<span class="fc" id="L410">            merged.set(&quot;Content-Type&quot;, resolveBody().contentType().get());</span>
+        }
+<span class="fc" id="L412">        return merged.build();</span>
+    }
+
+    private HttpBody resolveBody() {
+<span class="fc bfc" id="L416" title="All 2 branches covered.">        if (multipart != null) {</span>
+<span class="fc" id="L417">            return multipart.build();</span>
+        }
+<span class="fc" id="L419">        return body;</span>
+    }
+
+    private ApiRequest applyInterceptorsBefore(ApiRequest request) {
+<span class="fc" id="L423">        ApiRequest current = request;</span>
+<span class="fc bfc" id="L424" title="All 2 branches covered.">        for (RequestInterceptor interceptor : client.interceptors()) {</span>
+<span class="fc" id="L425">            current = interceptor.beforeRequest(current);</span>
+<span class="fc" id="L426">            publish(EventType.INTERCEPTOR_APPLIED, current, Map.of(</span>
+                    &quot;phase&quot;, &quot;before&quot;,
+<span class="fc" id="L428">                    &quot;interceptor&quot;, interceptor.getClass().getName()));</span>
+<span class="fc" id="L429">        }</span>
+<span class="fc" id="L430">        return current;</span>
+    }
+
+    private HttpResponse applyInterceptorsAfter(ApiRequest request, HttpResponse response) {
+<span class="fc" id="L434">        HttpResponse current = response;</span>
+<span class="fc" id="L435">        List&lt;RequestInterceptor&gt; chain = client.interceptors();</span>
+<span class="fc bfc" id="L436" title="All 2 branches covered.">        for (int i = chain.size() - 1; i &gt;= 0; i--) {</span>
+<span class="fc" id="L437">            RequestInterceptor interceptor = chain.get(i);</span>
+<span class="fc" id="L438">            current = interceptor.afterResponse(request, current);</span>
+<span class="fc" id="L439">            publish(EventType.INTERCEPTOR_APPLIED, request, Map.of(</span>
+                    &quot;phase&quot;, &quot;after&quot;,
+<span class="fc" id="L441">                    &quot;interceptor&quot;, interceptor.getClass().getName()));</span>
+        }
+<span class="fc" id="L443">        return current;</span>
+    }
+
+    private String maskedBodyPreview() {
+<span class="fc" id="L447">        HttpBody effective = resolveBody();</span>
+<span class="fc bfc" id="L448" title="All 2 branches covered.">        return effective == null ? &quot;&quot; : preview(client.masker().maskText(effective.asString()));</span>
+    }
+
+    private void publish(EventType type, ApiRequest request, Map&lt;String, Object&gt; payload) {
+<span class="fc" id="L452">        RequestContext ctx = request.context();</span>
+<span class="fc" id="L453">        ReportEvent.Builder b = ReportEvent.builder(type, SinaqRuntime.executionContext().executionId())</span>
+<span class="fc" id="L454">                .requestId(ctx.requestId())</span>
+<span class="fc" id="L455">                .correlationId(ctx.correlationId().orElse(null))</span>
+<span class="fc" id="L456">                .payload(payload);</span>
+<span class="fc" id="L457">        TestContext test = SinaqTestContextHolder.get();</span>
+<span class="pc bpc" id="L458" title="1 of 2 branches missed.">        if (test != null) {</span>
+<span class="nc" id="L459">            b.testId(test.testId());</span>
+        }
+<span class="fc" id="L461">        SinaqRuntime.publisher().publish(b.build());</span>
+<span class="fc" id="L462">    }</span>
+
+    private void publishError(ApiRequest request, SinaqException e) {
+<span class="nc" id="L465">        publish(EventType.ERROR_OCCURRED, request, Map.of(</span>
+<span class="nc" id="L466">                &quot;error&quot;, e.getClass().getSimpleName(),</span>
+<span class="nc" id="L467">                &quot;message&quot;, Optional.ofNullable(e.getMessage()).orElse(&quot;&quot;)));</span>
+<span class="nc" id="L468">    }</span>
+
+    private void publishMetrics(ApiRequest request, HttpResponse http) {
+<span class="fc" id="L471">        long sent = request.body().map(b -&gt; (long) b.bytes().length).orElse(0L);</span>
+<span class="fc" id="L472">        RequestMetrics metrics = new RequestMetrics(</span>
+<span class="fc" id="L473">                request.context().requestId(),</span>
+<span class="fc" id="L474">                http.responseTime(),</span>
+<span class="fc" id="L475">                request.timeout().connect(),</span>
+<span class="fc" id="L476">                request.timeout().read(),</span>
+                1,
+                sent,
+<span class="fc" id="L479">                http.rawBody().length,</span>
+<span class="fc" id="L480">                client.engine().name());</span>
+<span class="fc" id="L481">        SinaqRuntime.publisher().publish(ReportEvent.builder(</span>
+                        EventType.PERFORMANCE_RECORDED,
+<span class="fc" id="L483">                        SinaqRuntime.executionContext().executionId())</span>
+<span class="fc" id="L484">                .requestId(request.context().requestId())</span>
+<span class="fc" id="L485">                .correlationId(request.context().correlationId().orElse(null))</span>
+<span class="fc" id="L486">                .payload(metrics.asPayload())</span>
+<span class="fc" id="L487">                .build());</span>
+<span class="fc" id="L488">    }</span>
+
+    private static String encode(String s) {
+<span class="fc" id="L491">        return URLEncoder.encode(s, StandardCharsets.UTF_8).replace(&quot;+&quot;, &quot;%20&quot;);</span>
+    }
+
+    private static String encodePath(String s) {
+<span class="fc" id="L495">        return encode(s).replace(&quot;%2F&quot;, &quot;/&quot;);</span>
+    }
+
+    private static String trimTrailingSlash(String s) {
+<span class="pc bpc" id="L499" title="1 of 2 branches missed.">        return s.endsWith(&quot;/&quot;) ? s.substring(0, s.length() - 1) : s;</span>
+    }
+
+    private static String ensureLeadingSlash(String s) {
+<span class="pc bpc" id="L503" title="1 of 2 branches missed.">        return s.startsWith(&quot;/&quot;) ? s : &quot;/&quot; + s;</span>
+    }
+
+    private static String preview(String s) {
+<span class="pc bpc" id="L507" title="1 of 2 branches missed.">        return s.length() &lt;= 2048 ? s : s.substring(0, 2048) + &quot;...(truncated)&quot;;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

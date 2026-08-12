@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ConformanceFixture.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.conformance</a> &gt; <span class="el_source">ConformanceFixture.java</span></div><h1>ConformanceFixture.java</h1><pre class="source lang-java linenums">package io.sinaq.api.conformance;
+
+import io.sinaq.api.internal.json.JsonWriter;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Cross-language conformance fixture export (V4).
+ */
+public final class ConformanceFixture {
+
+    private ConformanceFixture() {}
+
+    public static String exportSuite() {
+<span class="fc" id="L16">        return JsonWriter.write(Map.of(</span>
+                &quot;schemaVersion&quot;, &quot;0.4&quot;,
+                &quot;language&quot;, &quot;java&quot;,
+<span class="fc" id="L19">                &quot;cases&quot;, List.of(</span>
+<span class="fc" id="L20">                        Map.of(&quot;name&quot;, &quot;getWithStatus&quot;, &quot;method&quot;, &quot;GET&quot;, &quot;path&quot;, &quot;/health&quot;,</span>
+<span class="fc" id="L21">                                &quot;expectStatus&quot;, 200),</span>
+<span class="fc" id="L22">                        Map.of(&quot;name&quot;, &quot;postWithBody&quot;, &quot;method&quot;, &quot;POST&quot;, &quot;path&quot;, &quot;/echo&quot;,</span>
+<span class="fc" id="L23">                                &quot;body&quot;, Map.of(&quot;key&quot;, &quot;value&quot;), &quot;expectStatus&quot;, 200),</span>
+<span class="fc" id="L24">                        Map.of(&quot;name&quot;, &quot;retryOn503&quot;, &quot;method&quot;, &quot;GET&quot;, &quot;path&quot;, &quot;/flaky&quot;,</span>
+<span class="fc" id="L25">                                &quot;retry&quot;, true, &quot;expectStatus&quot;, 200))));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

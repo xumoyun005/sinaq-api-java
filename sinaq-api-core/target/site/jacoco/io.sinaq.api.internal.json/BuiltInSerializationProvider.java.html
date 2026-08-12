@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>BuiltInSerializationProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.internal.json</a> &gt; <span class="el_source">BuiltInSerializationProvider.java</span></div><h1>BuiltInSerializationProvider.java</h1><pre class="source lang-java linenums">package io.sinaq.api.internal.json;
+
+import io.sinaq.api.exception.SinaqSerializationException;
+import io.sinaq.api.serialization.SerializationProvider;
+
+import java.lang.reflect.Type;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * INTERNAL — dependency-free {@link SerializationProvider}.
+ * Serializes Map/List/records/primitives; deserializes into Map/List/String/Number/Boolean.
+ * Arbitrary POJO deserialization requires sinaq-api-jackson.
+ */
+public final class BuiltInSerializationProvider implements SerializationProvider {
+
+<span class="fc" id="L17">    public static final BuiltInSerializationProvider INSTANCE = new BuiltInSerializationProvider();</span>
+
+    private BuiltInSerializationProvider() {}
+
+    @Override
+    public String serialize(Object value) {
+<span class="fc" id="L23">        return JsonWriter.write(value);</span>
+    }
+
+    @Override
+    @SuppressWarnings(&quot;unchecked&quot;)
+    public &lt;T&gt; T deserialize(String content, Class&lt;T&gt; type) {
+<span class="fc" id="L29">        Object parsed = Json.parse(content);</span>
+<span class="pc bpc" id="L30" title="7 of 12 branches missed.">        if (type == Object.class || type.isInstance(parsed)</span>
+                || (type == Map.class &amp;&amp; parsed instanceof Map)
+                || (type == List.class &amp;&amp; parsed instanceof List)) {
+<span class="fc" id="L33">            return (T) parsed;</span>
+        }
+<span class="fc" id="L35">        throw new SinaqSerializationException(</span>
+<span class="fc" id="L36">                &quot;Built-in provider cannot map JSON to &quot; + type.getName()</span>
+                + &quot;. Add the sinaq-api-jackson module or a custom SerializationProvider.&quot;);
+    }
+
+    @Override
+    public &lt;T&gt; T deserialize(String content, Type type) {
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">        if (type instanceof Class&lt;?&gt; c) {</span>
+            @SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L44">            T t = (T) deserialize(content, (Class&lt;Object&gt;) c);</span>
+<span class="nc" id="L45">            return t;</span>
+        }
+<span class="fc" id="L47">        throw new SinaqSerializationException(</span>
+                &quot;Built-in provider does not support generic type &quot; + type
+                + &quot;. Add the sinaq-api-jackson module.&quot;);
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

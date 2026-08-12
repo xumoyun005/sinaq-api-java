@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventType.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.events</a> &gt; <span class="el_source">EventType.java</span></div><h1>EventType.java</h1><pre class="source lang-java linenums">package io.sinaq.api.events;
+
+/** Framework-neutral lifecycle events (spec §21). */
+<span class="fc" id="L4">public enum EventType {</span>
+<span class="fc" id="L5">    TEST_STARTED,</span>
+<span class="fc" id="L6">    REQUEST_CREATED,</span>
+<span class="fc" id="L7">    REQUEST_STARTED,</span>
+<span class="fc" id="L8">    REQUEST_SENT,</span>
+<span class="fc" id="L9">    RESPONSE_RECEIVED,</span>
+<span class="fc" id="L10">    ASSERTION_STARTED,</span>
+<span class="fc" id="L11">    ASSERTION_PASSED,</span>
+<span class="fc" id="L12">    ASSERTION_FAILED,</span>
+<span class="fc" id="L13">    TEST_FINISHED,</span>
+<span class="fc" id="L14">    ERROR_OCCURRED,</span>
+    /** V2 — polling lifecycle */
+<span class="fc" id="L16">    POLL_STARTED,</span>
+<span class="fc" id="L17">    POLL_ATTEMPT,</span>
+<span class="fc" id="L18">    POLL_SUCCEEDED,</span>
+<span class="fc" id="L19">    POLL_FAILED,</span>
+    /** V2 — per-request performance snapshot */
+<span class="fc" id="L21">    PERFORMANCE_RECORDED,</span>
+    /** V2 — plugin registered */
+<span class="fc" id="L23">    PLUGIN_LOADED,</span>
+    /** V3 — interceptor applied */
+<span class="fc" id="L25">    INTERCEPTOR_APPLIED,</span>
+    /** V3 — exchange recorded for contract/HAR */
+<span class="fc" id="L27">    EXCHANGE_RECORDED,</span>
+    /** V3 — contract verified */
+<span class="fc" id="L29">    CONTRACT_VERIFIED,</span>
+    /** V3 — database validation */
+<span class="fc" id="L31">    DB_VALIDATION,</span>
+    /** V4 — response cache */
+<span class="fc" id="L33">    CACHE_HIT,</span>
+<span class="fc" id="L34">    CACHE_MISS,</span>
+    /** V4 — replay */
+<span class="fc" id="L36">    REPLAY_EXECUTED,</span>
+    /** V4 — messaging */
+<span class="fc" id="L38">    MESSAGE_PUBLISHED,</span>
+<span class="fc" id="L39">    MESSAGE_VALIDATED,</span>
+    /** V4 — distributed batch */
+<span class="fc" id="L41">    DISTRIBUTED_BATCH_COMPLETED,</span>
+    /** V4 — OpenAPI validated */
+<span class="fc" id="L43">    OPENAPI_VALIDATED</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JsonWriter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.internal.json</a> &gt; <span class="el_source">JsonWriter.java</span></div><h1>JsonWriter.java</h1><pre class="source lang-java linenums">package io.sinaq.api.internal.json;
+
+import io.sinaq.api.exception.SinaqSerializationException;
+
+import java.lang.reflect.RecordComponent;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * INTERNAL — minimal, dependency-free JSON writer.
+ * Supports null, String, Number, Boolean, Map, Iterable, arrays and Java records.
+ * Arbitrary POJOs need a real SerializationProvider (e.g. sinaq-api-jackson).
+ */
+public final class JsonWriter {
+
+    private JsonWriter() {}
+
+    public static String write(Object value) {
+<span class="fc" id="L19">        StringBuilder sb = new StringBuilder();</span>
+<span class="fc" id="L20">        writeValue(value, sb);</span>
+<span class="fc" id="L21">        return sb.toString();</span>
+    }
+
+    private static void writeValue(Object v, StringBuilder sb) {
+<span class="pc bpc" id="L25" title="2 of 8 branches missed.">        switch (v) {</span>
+<span class="nc" id="L26">            case null -&gt; sb.append(&quot;null&quot;);</span>
+<span class="fc" id="L27">            case String s -&gt; writeString(s, sb);</span>
+<span class="fc" id="L28">            case Boolean b -&gt; sb.append(b);</span>
+<span class="fc" id="L29">            case Number n -&gt; sb.append(n);</span>
+<span class="fc" id="L30">            case Map&lt;?, ?&gt; m -&gt; {</span>
+<span class="fc" id="L31">                sb.append('{');</span>
+<span class="fc" id="L32">                boolean first = true;</span>
+<span class="fc bfc" id="L33" title="All 2 branches covered.">                for (Map.Entry&lt;?, ?&gt; e : m.entrySet()) {</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">                    if (!first) sb.append(',');</span>
+<span class="fc" id="L35">                    first = false;</span>
+<span class="fc" id="L36">                    writeString(String.valueOf(e.getKey()), sb);</span>
+<span class="fc" id="L37">                    sb.append(':');</span>
+<span class="fc" id="L38">                    writeValue(e.getValue(), sb);</span>
+<span class="fc" id="L39">                }</span>
+<span class="fc" id="L40">                sb.append('}');</span>
+<span class="fc" id="L41">            }</span>
+<span class="fc" id="L42">            case Iterable&lt;?&gt; it -&gt; {</span>
+<span class="fc" id="L43">                sb.append('[');</span>
+<span class="fc" id="L44">                boolean first = true;</span>
+<span class="fc bfc" id="L45" title="All 2 branches covered.">                for (Object e : it) {</span>
+<span class="fc bfc" id="L46" title="All 2 branches covered.">                    if (!first) sb.append(',');</span>
+<span class="fc" id="L47">                    first = false;</span>
+<span class="fc" id="L48">                    writeValue(e, sb);</span>
+<span class="fc" id="L49">                }</span>
+<span class="fc" id="L50">                sb.append(']');</span>
+<span class="fc" id="L51">            }</span>
+<span class="nc" id="L52">            case Object[] arr -&gt; writeValue(List.of(arr), sb);</span>
+            default -&gt; {
+<span class="fc bfc" id="L54" title="All 2 branches covered.">                if (v.getClass().isRecord()) {</span>
+<span class="fc" id="L55">                    writeRecord(v, sb);</span>
+                } else {
+<span class="fc" id="L57">                    throw new SinaqSerializationException(</span>
+                            &quot;Built-in serializer supports Map/List/records/primitives only; got &quot;
+<span class="fc" id="L59">                            + v.getClass().getName()</span>
+                            + &quot;. Add the sinaq-api-jackson module or a custom SerializationProvider.&quot;);
+                }
+            }
+        }
+<span class="fc" id="L64">    }</span>
+
+    private static void writeRecord(Object rec, StringBuilder sb) {
+<span class="fc" id="L67">        sb.append('{');</span>
+<span class="fc" id="L68">        RecordComponent[] components = rec.getClass().getRecordComponents();</span>
+<span class="fc bfc" id="L69" title="All 2 branches covered.">        for (int i = 0; i &lt; components.length; i++) {</span>
+<span class="fc bfc" id="L70" title="All 2 branches covered.">            if (i &gt; 0) sb.append(',');</span>
+<span class="fc" id="L71">            writeString(components[i].getName(), sb);</span>
+<span class="fc" id="L72">            sb.append(':');</span>
+            try {
+<span class="fc" id="L74">                var accessor = components[i].getAccessor();</span>
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">                if (!accessor.trySetAccessible()) {</span>
+<span class="nc" id="L76">                    throw new SinaqSerializationException(</span>
+<span class="nc" id="L77">                            &quot;Cannot access record component &quot; + components[i].getName());</span>
+                }
+<span class="fc" id="L79">                writeValue(accessor.invoke(rec), sb);</span>
+<span class="nc" id="L80">            } catch (ReflectiveOperationException e) {</span>
+<span class="nc" id="L81">                throw new SinaqSerializationException(</span>
+<span class="nc" id="L82">                        &quot;Failed to read record component &quot; + components[i].getName(), e);</span>
+<span class="fc" id="L83">            }</span>
+        }
+<span class="fc" id="L85">        sb.append('}');</span>
+<span class="fc" id="L86">    }</span>
+
+    private static void writeString(String s, StringBuilder sb) {
+<span class="fc" id="L89">        sb.append('&quot;');</span>
+<span class="fc bfc" id="L90" title="All 2 branches covered.">        for (int i = 0; i &lt; s.length(); i++) {</span>
+<span class="fc" id="L91">            char c = s.charAt(i);</span>
+<span class="pc bpc" id="L92" title="6 of 8 branches missed.">            switch (c) {</span>
+<span class="fc" id="L93">                case '&quot;' -&gt; sb.append(&quot;\\\&quot;&quot;);</span>
+<span class="nc" id="L94">                case '\\' -&gt; sb.append(&quot;\\\\&quot;);</span>
+<span class="nc" id="L95">                case '\b' -&gt; sb.append(&quot;\\b&quot;);</span>
+<span class="nc" id="L96">                case '\f' -&gt; sb.append(&quot;\\f&quot;);</span>
+<span class="nc" id="L97">                case '\n' -&gt; sb.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L98">                case '\r' -&gt; sb.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L99">                case '\t' -&gt; sb.append(&quot;\\t&quot;);</span>
+                default -&gt; {
+<span class="pc bpc" id="L101" title="1 of 2 branches missed.">                    if (c &lt; 0x20) sb.append(String.format(&quot;\\u%04x&quot;, (int) c));</span>
+<span class="fc" id="L102">                    else sb.append(c);</span>
+                }
+            }
+        }
+<span class="fc" id="L106">        sb.append('&quot;');</span>
+<span class="fc" id="L107">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

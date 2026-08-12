@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SerializationProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.serialization</a> &gt; <span class="el_source">SerializationProvider.java</span></div><h1>SerializationProvider.java</h1><pre class="source lang-java linenums">package io.sinaq.api.serialization;
+
+import java.lang.reflect.Type;
+
+/**
+ * Serialization SPI (spec §15). The core never hard-codes a JSON library.
+ *
+ * &lt;p&gt;Default: the dependency-free built-in provider (Map/List/records/primitives).
+ * For arbitrary POJOs plug in the {@code sinaq-api-jackson} module or your own
+ * implementation. Implementations must be thread-safe.&lt;/p&gt;
+ */
+public interface SerializationProvider {
+
+    String serialize(Object value);
+
+    &lt;T&gt; T deserialize(String content, Class&lt;T&gt; type);
+
+    &lt;T&gt; T deserialize(String content, Type type);
+
+    /** The dependency-free default provider. */
+    static SerializationProvider builtIn() {
+<span class="fc" id="L22">        return io.sinaq.api.internal.json.BuiltInSerializationProvider.INSTANCE;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

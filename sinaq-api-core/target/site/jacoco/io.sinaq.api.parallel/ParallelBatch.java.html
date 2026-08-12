@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ParallelBatch.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Sinaq API Core</a> &gt; <a href="index.source.html" class="el_package">io.sinaq.api.parallel</a> &gt; <span class="el_source">ParallelBatch.java</span></div><h1>ParallelBatch.java</h1><pre class="source lang-java linenums">package io.sinaq.api.parallel;
+
+import io.sinaq.api.exception.SinaqException;
+import io.sinaq.api.request.RequestSpec;
+import io.sinaq.api.response.ApiResponse;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+/**
+ * Named parallel batch execution with timeout (V3).
+ */
+public final class ParallelBatch {
+
+    private ParallelBatch() {}
+
+    public static ParallelResult execute(Map&lt;String, Supplier&lt;RequestSpec&gt;&gt; namedSuppliers,
+                                         int threads, Duration timeout) {
+<span class="fc" id="L29">        Objects.requireNonNull(namedSuppliers, &quot;namedSuppliers&quot;);</span>
+<span class="fc bfc" id="L30" title="All 2 branches covered.">        if (namedSuppliers.isEmpty()) {</span>
+<span class="fc" id="L31">            return new ParallelResult(Map.of());</span>
+        }
+<span class="fc" id="L33">        int poolSize = Math.max(1, Math.min(threads, namedSuppliers.size()));</span>
+<span class="fc" id="L34">        ExecutorService pool = Executors.newFixedThreadPool(poolSize);</span>
+        try {
+<span class="fc" id="L36">            Map&lt;String, Future&lt;ApiResponse&gt;&gt; futures = new LinkedHashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L37" title="All 2 branches covered.">            for (Map.Entry&lt;String, Supplier&lt;RequestSpec&gt;&gt; e : namedSuppliers.entrySet()) {</span>
+<span class="fc" id="L38">                Callable&lt;ApiResponse&gt; task = () -&gt; e.getValue().get().execute();</span>
+<span class="fc" id="L39">                futures.put(e.getKey(), pool.submit(task));</span>
+<span class="fc" id="L40">            }</span>
+<span class="fc" id="L41">            Map&lt;String, ApiResponse&gt; results = new LinkedHashMap&lt;&gt;();</span>
+<span class="pc bpc" id="L42" title="1 of 2 branches missed.">            long ms = timeout != null ? timeout.toMillis() : 60_000L;</span>
+<span class="fc bfc" id="L43" title="All 2 branches covered.">            for (Map.Entry&lt;String, Future&lt;ApiResponse&gt;&gt; e : futures.entrySet()) {</span>
+<span class="fc" id="L44">                results.put(e.getKey(), e.getValue().get(ms, TimeUnit.MILLISECONDS));</span>
+<span class="fc" id="L45">            }</span>
+<span class="fc" id="L46">            return new ParallelResult(results);</span>
+<span class="nc" id="L47">        } catch (Exception e) {</span>
+<span class="nc" id="L48">            throw new SinaqException(&quot;Parallel batch failed&quot;, e);</span>
+        } finally {
+<span class="fc" id="L50">            pool.shutdown();</span>
+        }
+    }
+
+    public record ParallelResult(Map&lt;String, ApiResponse&gt; responses) {
+<span class="fc" id="L55">        public ParallelResult {</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">            responses = responses == null ? Map.of() : Map.copyOf(responses);</span>
+<span class="fc" id="L57">        }</span>
+
+        public ApiResponse get(String name) {
+<span class="fc" id="L60">            return responses.get(name);</span>
+        }
+
+        public List&lt;ApiResponse&gt; all() {
+<span class="fc" id="L64">            return new ArrayList&lt;&gt;(responses.values());</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
