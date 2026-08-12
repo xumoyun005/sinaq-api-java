@@ -109,4 +109,6 @@ Runnable examples live in the `examples` module.
 
 ## License
 
-Not published yet. Source is available in this repository.
+Apache License 2.0. See [LICENSE](LICENSE).
+
+Publishing to Maven Central: [docs/publishing.md](docs/publishing.md).

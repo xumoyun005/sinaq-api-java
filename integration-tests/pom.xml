@@ -16,6 +16,12 @@
     or Xazna environment involved). Runs the same suite through the JDK engine;
     the RestAssured engine reuses the suite via EngineContractIT once built.
   </description>
+  <properties>
+    <maven.deploy.skip>true</maven.deploy.skip>
+    <maven.source.skip>true</maven.source.skip>
+    <maven.javadoc.skip>true</maven.javadoc.skip>
+    <gpg.skip>true</gpg.skip>
+  </properties>
   <dependencies>
     <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-core</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>io.sinaq</groupId><artifactId>sinaq-api-jdk</artifactId><version>${project.version}</version></dependency>
@@ -46,6 +52,13 @@
             <goals><goal>integration-test</goal><goal>verify</goal></goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <configuration>
+          <skipPublishing>true</skipPublishing>
+        </configuration>
       </plugin>
     </plugins>
   </build>

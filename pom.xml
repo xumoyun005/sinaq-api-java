@@ -11,7 +11,36 @@
 
   <name>Sinaq API Parent</name>
   <description>Sinaq — universal API automation framework. Parent build.</description>
-  <url>https://github.com/sinaq/sinaq-api-java</url>
+  <url>https://github.com/xumoyun005/sinaq-api-java</url>
+
+  <licenses>
+    <license>
+      <name>The Apache License, Version 2.0</name>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <id>xumoyun005</id>
+      <name>Xumoyiddin Xolmuminov</name>
+      <email>xumoyiddinxolmuminov858@gmail.com</email>
+      <url>https://github.com/xumoyun005</url>
+    </developer>
+  </developers>
+
+  <scm>
+    <connection>scm:git:https://github.com/xumoyun005/sinaq-api-java.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/xumoyun005/sinaq-api-java.git</developerConnection>
+    <url>https://github.com/xumoyun005/sinaq-api-java</url>
+    <tag>HEAD</tag>
+  </scm>
+
+  <issueManagement>
+    <system>GitHub</system>
+    <url>https://github.com/xumoyun005/sinaq-api-java/issues</url>
+  </issueManagement>
 
   <modules>
     <module>sinaq-api-core</module>
@@ -43,6 +72,10 @@
     <surefire.version>3.2.5</surefire.version>
     <enforcer.version>3.4.1</enforcer.version>
     <jacoco.version>0.8.12</jacoco.version>
+    <source.plugin.version>3.3.1</source.plugin.version>
+    <javadoc.plugin.version>3.11.2</javadoc.plugin.version>
+    <gpg.plugin.version>3.2.7</gpg.plugin.version>
+    <central.publishing.version>0.9.0</central.publishing.version>
   </properties>
 
   <dependencyManagement>
@@ -150,6 +183,26 @@
           <artifactId>jacoco-maven-plugin</artifactId>
           <version>${jacoco.version}</version>
         </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-source-plugin</artifactId>
+          <version>${source.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>${javadoc.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-gpg-plugin</artifactId>
+          <version>${gpg.plugin.version}</version>
+        </plugin>
+        <plugin>
+          <groupId>org.sonatype.central</groupId>
+          <artifactId>central-publishing-maven-plugin</artifactId>
+          <version>${central.publishing.version}</version>
+        </plugin>
       </plugins>
     </pluginManagement>
 
@@ -172,4 +225,65 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <configuration>
+              <failOnError>false</failOnError>
+              <doclint>none</doclint>
+              <quiet>true</quiet>
+            </configuration>
+            <executions>
+              <execution>
+                <id>attach-javadocs</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.sonatype.central</groupId>
+            <artifactId>central-publishing-maven-plugin</artifactId>
+            <extensions>true</extensions>
+            <configuration>
+              <publishingServerId>central</publishingServerId>
+              <autoPublish>false</autoPublish>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 </project>

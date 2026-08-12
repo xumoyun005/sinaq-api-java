@@ -11,6 +11,12 @@
   <artifactId>examples</artifactId>
   <name>Sinaq API Examples</name>
   <description>Runnable examples — not published to Maven Central.</description>
+  <properties>
+    <maven.deploy.skip>true</maven.deploy.skip>
+    <maven.source.skip>true</maven.source.skip>
+    <maven.javadoc.skip>true</maven.javadoc.skip>
+    <gpg.skip>true</gpg.skip>
+  </properties>
   <dependencies>
     <dependency>
       <groupId>io.sinaq</groupId>
@@ -63,6 +69,13 @@
             <include>**/*Example.java</include>
             <include>**/*Test.java</include>
           </includes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
+        <configuration>
+          <skipPublishing>true</skipPublishing>
         </configuration>
       </plugin>
     </plugins>
