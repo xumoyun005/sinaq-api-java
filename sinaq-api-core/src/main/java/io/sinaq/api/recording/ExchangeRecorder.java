@@ -5,7 +5,6 @@ import io.sinaq.api.events.EventType;
 import io.sinaq.api.events.ReportEvent;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

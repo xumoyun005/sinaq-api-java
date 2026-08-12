@@ -12,7 +12,6 @@ import io.sinaq.api.http.ImmutableHttpResponse;
 import io.sinaq.api.parallel.ParallelBatch;
 import io.sinaq.api.recording.ExchangeRecorder;
 import io.sinaq.api.request.RequestSpec;
-import io.sinaq.api.SinaqRuntime;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 

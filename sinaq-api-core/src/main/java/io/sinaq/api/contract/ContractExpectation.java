@@ -1,6 +1,5 @@
 package io.sinaq.api.contract;
 
-import java.util.Objects;
 import java.util.Optional;
 
 /** Expected shape of a recorded HTTP exchange (V3). */

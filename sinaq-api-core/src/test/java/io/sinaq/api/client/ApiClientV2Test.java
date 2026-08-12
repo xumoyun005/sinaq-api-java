@@ -11,7 +11,6 @@ import io.sinaq.api.template.RequestTemplate;
 import io.sinaq.api.support.StubHttpEngine;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;

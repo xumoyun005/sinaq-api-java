@@ -4,7 +4,6 @@ import io.sinaq.api.auth.BearerTokenAuth;
 import io.sinaq.api.auth.TokenCache;
 import io.sinaq.api.client.Sinaq;
 import io.sinaq.api.config.EnvironmentProfile;
-import io.sinaq.api.events.EventType;
 import io.sinaq.api.parallel.ParallelRequests;
 import io.sinaq.api.plugin.PluginRegistry;
 import io.sinaq.api.plugin.SinaqPlugin;

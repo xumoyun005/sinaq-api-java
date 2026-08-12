@@ -1,5 +1,0 @@
-sinaq:
-  env: int
-  baseUrl: https://yaml.example.com
-  timeout:
-    connect: 4000

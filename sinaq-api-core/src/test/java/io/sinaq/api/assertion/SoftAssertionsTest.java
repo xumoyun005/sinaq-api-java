@@ -4,7 +4,6 @@ import io.sinaq.api.client.ApiClient;
 import io.sinaq.api.client.Sinaq;
 import io.sinaq.api.exception.SinaqAssertionException;
 import io.sinaq.api.support.StubHttpEngine;
-import io.sinaq.api.support.StubHttpResponse;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;

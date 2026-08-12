@@ -6,7 +6,6 @@ import io.sinaq.api.response.ApiResponse;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Collects assertion failures without failing immediately (V2 soft-assert mode).
