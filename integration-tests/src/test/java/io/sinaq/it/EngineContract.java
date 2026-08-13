@@ -97,7 +97,9 @@ public abstract class EngineContract {
                 .expectResponseTimeLessThan(Duration.ofSeconds(10));
         assertThatThrownBy(() -> api().get("/loan").expectStatus(404))
                 .isInstanceOf(SinaqAssertionException.class)
-                .hasMessageContaining("expected: 404");
+                .hasMessageContaining("expected=404")
+                .hasMessageContaining("actual  =200")
+                .hasMessageContaining("curl:");
     }
 
     @Test
