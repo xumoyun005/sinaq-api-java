@@ -9,14 +9,7 @@ Requires JDK 21+ and Maven 3.9+.
 
 ## Install
 
-Artifacts are not on Maven Central yet. From this repository:
-
-```bash
-export JAVA_HOME=$(/usr/libexec/java_home -v 21)
-mvn clean install
-```
-
-Then in your test project:
+Maven Central (`groupId` `uz.sinaq`):
 
 ```xml
 <dependency>
@@ -27,7 +20,7 @@ Then in your test project:
 </dependency>
 ```
 
-`sinaq-api-starter` includes core, RestAssured, Jackson, JSONPath, JSON Schema, and TestNG.
+`sinaq-api-starter` includes core, RestAssured engine, Jackson, JSONPath, JSON Schema, and TestNG.
 
 Minimal stack (JDK HTTP client, built-in JSON):
 
@@ -41,6 +34,23 @@ Minimal stack (JDK HTTP client, built-in JSON):
 ```
 
 JUnit 5: add `sinaq-api-junit5` as well (starter ships TestNG).
+
+## Coming from RestAssured?
+
+You do not need to relearn API testing. Sinaq maps the everyday RestAssured paths:
+
+| RestAssured | Sinaq |
+|-------------|--------|
+| `given().when().get("/x")` | `api.get("/x")` |
+| `then().statusCode(200)` | `.expectStatus(200)` |
+| `body("ok", equalTo(true))` | `.expect("ok", true)` |
+| `auth().oauth2(token)` | `.bearer(token)` |
+| `extract().path("id")` | `.execute().extract("$.id")` |
+
+**Soft landing:** use `.engine(new RestAssuredEngine())` first — same DSL, RestAssured on the wire — then switch to `JdkHttpEngine` later.
+
+Full side-by-side guide + checklist: **[Migrate from RestAssured](docs/migrate-from-restassured.md)**  
+Runnable pairs: `examples/.../RestAssuredMigrationExample.java`
 
 ## Quick start
 
@@ -95,6 +105,7 @@ Share one `ApiClient` across tests (it is immutable and thread-safe). Create a n
 | Guide | Contents |
 |-------|----------|
 | [Getting started](docs/getting-started.md) | Config, fixtures, retry, adapters |
+| [Migrate from RestAssured](docs/migrate-from-restassured.md) | Side-by-side mapping, checklist, soft landing |
 | [V2](docs/v2.md) | JSONPath, schema, OAuth, YAML, plugins |
 | [V3](docs/v3.md) | OkHttp, interceptors, GraphQL, JDBC, HAR |
 | [V4](docs/v4.md) | WireMock, OpenAPI, cache, replay, messaging |

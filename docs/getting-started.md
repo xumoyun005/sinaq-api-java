@@ -1,5 +1,7 @@
 # Getting started
 
+Coming from RestAssured? Start here: **[Migrate from RestAssured](migrate-from-restassured.md)**.
+
 ## 1. Add the dependency
 
 Common stack (RestAssured + Jackson + TestNG):
