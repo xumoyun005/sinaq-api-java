@@ -50,7 +50,8 @@ You do not need to relearn API testing. Sinaq maps the everyday RestAssured path
 **Soft landing:** use `.engine(new RestAssuredEngine())` first — same DSL, RestAssured on the wire — then switch to `JdkHttpEngine` later.
 
 Full side-by-side guide + checklist: **[Migrate from RestAssured](docs/migrate-from-restassured.md)**  
-Runnable pairs: `examples/.../RestAssuredMigrationExample.java`
+Runnable pairs: `examples/.../RestAssuredMigrationExample.java`  
+IDE snippets: [docs/ide/](docs/ide/)
 
 ## Quick start
 

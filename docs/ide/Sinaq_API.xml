@@ -1,0 +1,26 @@
+<templateSet group="Sinaq API">
+  <template name="sinaq-client" value="ApiClient api = Sinaq.client()&#10;        .baseUrl(&quot;$BASE$&quot;)&#10;        .engine(new JdkHttpEngine())&#10;        .plugin(new JaywayExtractionProvider.Plugin())&#10;        .build();" description="Sinaq ApiClient builder" toReformat="true" toShortenFQNames="true">
+    <variable name="BASE" expression="&quot;https://api.example.com&quot;" defaultValue="&quot;https://api.example.com&quot;" alwaysStopAt="true" />
+    <context name="JAVA_STATEMENT" />
+  </template>
+  <template name="sinaq-get" value="api.get(&quot;$PATH$&quot;)&#10;        .expectStatus($STATUS$);" description="Sinaq GET + status" toReformat="true" toShortenFQNames="true">
+    <variable name="PATH" expression="&quot;/path&quot;" defaultValue="&quot;/path&quot;" alwaysStopAt="true" />
+    <variable name="STATUS" expression="200" defaultValue="200" alwaysStopAt="true" />
+    <context name="JAVA_STATEMENT" />
+  </template>
+  <template name="sinaq-post-json" value="api.post(&quot;$PATH$&quot;)&#10;        .bearer($TOKEN$)&#10;        .body($BODY$)&#10;        .expectStatus($STATUS$)&#10;        .expect(&quot;$FIELD$&quot;, $EXPECTED$);" description="Sinaq POST JSON + asserts" toReformat="true" toShortenFQNames="true">
+    <variable name="PATH" expression="&quot;/path&quot;" defaultValue="&quot;/path&quot;" alwaysStopAt="true" />
+    <variable name="TOKEN" expression="token" defaultValue="token" alwaysStopAt="true" />
+    <variable name="BODY" expression="Map.of()" defaultValue="Map.of()" alwaysStopAt="true" />
+    <variable name="STATUS" expression="200" defaultValue="200" alwaysStopAt="true" />
+    <variable name="FIELD" expression="&quot;ok&quot;" defaultValue="&quot;ok&quot;" alwaysStopAt="true" />
+    <variable name="EXPECTED" expression="true" defaultValue="true" alwaysStopAt="true" />
+    <context name="JAVA_STATEMENT" />
+  </template>
+  <template name="sinaq-extract" value="String $VAR$ = api.get(&quot;$PATH$&quot;).execute().extract(&quot;$JSONPATH$&quot;);" description="Sinaq extract JSONPath" toReformat="true" toShortenFQNames="true">
+    <variable name="VAR" expression="id" defaultValue="id" alwaysStopAt="true" />
+    <variable name="PATH" expression="&quot;/path&quot;" defaultValue="&quot;/path&quot;" alwaysStopAt="true" />
+    <variable name="JSONPATH" expression="&quot;$.id&quot;" defaultValue="&quot;$.id&quot;" alwaysStopAt="true" />
+    <context name="JAVA_STATEMENT" />
+  </template>
+</templateSet>

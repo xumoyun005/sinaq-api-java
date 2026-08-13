@@ -72,7 +72,11 @@ void createLoan() {
         .expect("success", true)
         .expectNotNull("loanId");
 }
+```
 
+On failure, Sinaq prints a rich message: expected vs actual, masked request/response preview, and a copy-pasteable `curl:` line (secrets already masked).
+
+```java
 @Test
 void listCards() {
     ApiResponse r = ApiFixture.API.get("/cards").execute();

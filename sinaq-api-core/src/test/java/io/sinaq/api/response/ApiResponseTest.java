@@ -92,10 +92,12 @@ class ApiResponseTest {
         ApiResponse r = api.get("/users").execute();
         assertThatThrownBy(() -> r.expectStatus(404))
                 .isInstanceOf(SinaqAssertionException.class)
-                .hasMessageContaining("expected: 404")
-                .hasMessageContaining("actual: 200");
+                .hasMessageContaining("expected=404")
+                .hasMessageContaining("actual  =200")
+                .hasMessageContaining("curl:");
         assertThatThrownBy(() -> r.expect("$.id", 99))
-                .isInstanceOf(SinaqAssertionException.class);
+                .isInstanceOf(SinaqAssertionException.class)
+                .hasMessageContaining("response-body:");
         assertThatThrownBy(() -> r.expectNotNull("$.missing"))
                 .isInstanceOf(SinaqAssertionException.class);
         assertThatThrownBy(() -> r.expectNull("$.name"))
@@ -104,5 +106,16 @@ class ApiResponseTest {
                 .isInstanceOf(SinaqAssertionException.class);
         assertThatThrownBy(() -> r.expectResponseTimeLessThan(Duration.ZERO))
                 .isInstanceOf(SinaqAssertionException.class);
+    }
+
+    @Test
+    void assertionFailureMasksBearerInCurl() {
+        engine.respondJson(200, "{\"ok\":true}");
+        ApiResponse r = api.get("/secure").bearer("super-secret-token").execute();
+        assertThatThrownBy(() -> r.expectStatus(500))
+                .isInstanceOf(SinaqAssertionException.class)
+                .hasMessageContaining("curl:")
+                .hasMessageContaining("Bearer ****")
+                .hasMessageNotContaining("super-secret-token");
     }
 }

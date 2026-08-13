@@ -163,15 +163,34 @@ api.get("/cards").expectStatus(200).expectArraySize("$.cards", 2);
 
 You do **not** need a full RestAssured API clone — only the **~80% daily paths** above.
 
+## Migration FAQ
+
+**Q: `RestAssured.baseURI` / static auth?**  
+A: Put base URL and defaults on `Sinaq.client()…build()` once. Prefer `.bearer(token)` per request or client defaults — avoid mutable statics for parallel suites.
+
+**Q: Will parallel tests break?**  
+A: Share one immutable `ApiClient`; create each request inside the test. Do not mutate RestAssured static config if you still use `RestAssuredEngine`.
+
+**Q: Where did Hamcrest `body("x", hasItem(...))` go?**  
+A: Use `.expect` / `.expectArraySize` / extract + AssertJ. Most equality checks are one-liners; complex matchers stay in AssertJ.
+
+**Q: Can I keep RestAssured on the wire?**  
+A: Yes — `.engine(new RestAssuredEngine())`, then switch to `JdkHttpEngine` later without rewriting tests.
+
+**Q: IDE snippets?**  
+A: Import [docs/ide/Sinaq_API.xml](ide/Sinaq_API.xml) live templates.
+
 ## 7. Why switch after you know RA
 
 - No static global config → safer parallel runs  
 - Pluggable engines (JDK / OkHttp / RestAssured)  
 - First-class events + masking → reporting without leaking secrets  
 - Same skills: HTTP, JSONPath, status, auth  
+- Richer assertion failures (expected/actual + masked RR + `curl:`)
 
 ## See also
 
 - [Getting started](getting-started.md)
 - [Publishing / coordinates](publishing.md) (`uz.sinaq`)
+- [IDE live templates](ide/README.md)
 - Examples module: `mvn -pl examples test`

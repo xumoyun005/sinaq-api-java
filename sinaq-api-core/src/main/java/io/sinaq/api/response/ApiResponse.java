@@ -1,6 +1,7 @@
 package io.sinaq.api.response;
 
 import io.sinaq.api.SinaqRuntime;
+import io.sinaq.api.assertion.AssertionFailureFormatter;
 import io.sinaq.api.assertion.SchemaValidator;
 import io.sinaq.api.assertion.SoftAssertions;
 import io.sinaq.api.events.EventType;
@@ -202,9 +203,8 @@ public final class ApiResponse {
         publishAssertion(passed, description, expected, actual);
         if (!passed) {
             throw new SinaqAssertionException(
-                    "Assertion failed: " + description
-                    + " | expected: " + expected + " | actual: " + actual
-                    + " | " + request.method() + " " + request.uri() + " -> " + status(),
+                    AssertionFailureFormatter.format(
+                            description, expected, actual, request, http, masker),
                     null, request.context().correlationId().orElse(null));
         }
         return this;
