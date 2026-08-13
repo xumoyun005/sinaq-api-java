@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.2.0 — 2026-08-13
+
+### Added
+- Rich assertion failures: expected vs actual, masked request/response preview, copy-pasteable `curl:`
+- IntelliJ live templates (`docs/ide/`)
+- RestAssured migration FAQ
+
+### Docs
+- Getting started notes richer fail messages
+
 ## 1.0.0 — 2026-08-12
 
 First public release (V1–V4 in one version).
