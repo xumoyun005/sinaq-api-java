@@ -4,7 +4,7 @@
 
 Fluent request DSL, pluggable HTTP engines, JSONPath / JSON Schema, OAuth2, WireMock, OpenAPI checks, and TestNG / JUnit 5 adapters. Core has **zero compile-time dependencies**.
 
-**Current version: `1.2.0`** · Maven `groupId`: `uz.sinaq` · Domain: [sinaq.uz](https://sinaq.uz)  
+**Current version: `1.2.1`** · Maven `groupId`: `uz.sinaq` · Domain: [sinaq.uz](https://sinaq.uz)  
 Requires JDK 21+ and Maven 3.9+.
 
 ## Install
@@ -15,7 +15,7 @@ Maven Central (`groupId` `uz.sinaq`):
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -28,7 +28,7 @@ Minimal stack (JDK HTTP client, built-in JSON):
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-jdk</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```

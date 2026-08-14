@@ -10,7 +10,7 @@ Common stack (RestAssured + Jackson + TestNG):
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -21,7 +21,7 @@ Zero-dependency stack (JDK transport, built-in serialization):
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-jdk</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```

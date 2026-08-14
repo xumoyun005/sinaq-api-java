@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.2.1 — 2026-08-14
+
+### Fixed
+- TestNG / JUnit adapters emit `PASSED` / `FAILED` / `SKIPPED` to match Sinaq Report
+
 ## 1.2.0 — 2026-08-13
 
 ### Added

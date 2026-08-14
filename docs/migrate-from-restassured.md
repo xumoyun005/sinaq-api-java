@@ -23,7 +23,7 @@ Goal: your first Sinaq test in **under an hour**, then migrate suite-by-suite.
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -34,7 +34,7 @@ JUnit 5:
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-junit5</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -45,7 +45,7 @@ Optional report:
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-report-java</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```

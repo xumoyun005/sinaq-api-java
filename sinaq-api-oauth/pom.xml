@@ -6,7 +6,7 @@
   <parent>
     <groupId>uz.sinaq</groupId>
     <artifactId>sinaq-api-parent</artifactId>
-    <version>1.2.0</version>
+    <version>1.2.1</version>
   </parent>
   <artifactId>sinaq-api-oauth</artifactId>
   <name>Sinaq API OAuth2</name>

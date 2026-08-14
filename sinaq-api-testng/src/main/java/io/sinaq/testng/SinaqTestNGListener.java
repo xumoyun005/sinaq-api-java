@@ -31,18 +31,18 @@ public final class SinaqTestNGListener implements ITestListener {
 
     @Override
     public void onTestSuccess(ITestResult result) {
-        finish(result, "passed", null);
+        finish(result, "PASSED", null);
     }
 
     @Override
     public void onTestFailure(ITestResult result) {
         Throwable t = result.getThrowable();
-        finish(result, "failed", t == null ? "" : String.valueOf(t.getMessage()));
+        finish(result, "FAILED", t == null ? "" : String.valueOf(t.getMessage()));
     }
 
     @Override
     public void onTestSkipped(ITestResult result) {
-        finish(result, "skipped", null);
+        finish(result, "SKIPPED", null);
     }
 
     private void finish(ITestResult result, String status, String message) {

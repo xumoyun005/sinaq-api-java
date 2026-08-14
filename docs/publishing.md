@@ -64,7 +64,7 @@ After it is live:
 <dependency>
   <groupId>uz.sinaq</groupId>
   <artifactId>sinaq-api-starter</artifactId>
-  <version>1.2.0</version>
+  <version>1.2.1</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -74,6 +74,6 @@ After it is live:
 ## 5. GitHub release (optional)
 
 ```bash
-git tag v1.2.0
-git push origin v1.2.0
+git tag v1.2.1
+git push origin v1.2.1
 ```

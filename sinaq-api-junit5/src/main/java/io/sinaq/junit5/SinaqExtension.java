@@ -39,7 +39,7 @@ public final class SinaqExtension implements BeforeEachCallback, AfterEachCallba
             if (test == null) {
                 return;
             }
-            String status = context.getExecutionException().isPresent() ? "failed" : "passed";
+            String status = context.getExecutionException().isPresent() ? "FAILED" : "PASSED";
             SinaqRuntime.publisher().publish(
                     ReportEvent.builder(EventType.TEST_FINISHED, test.execution().executionId())
                             .testId(test.testId())
